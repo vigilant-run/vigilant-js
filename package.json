@@ -1,0 +1,26 @@
+{
+  "name": "vigilant-js",
+  "author": "Vigilant",
+  "version": "1.0.0",
+  "description": "SDK for Vigilant",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "vigilant",
+    "sdk"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.11.19"
+  }
+}
