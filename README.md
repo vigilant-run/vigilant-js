@@ -19,7 +19,7 @@ const vigilant = new VigilantLogger({
 })
 
 // Log an event
-vigilant.info('event_name')
-vigilant.warn('event_name')
-vigilant.error('event_name')
+vigilant.info('a message')
+vigilant.warn('a warning')
+vigilant.error('an error')
 ```
