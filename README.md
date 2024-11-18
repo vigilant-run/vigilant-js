@@ -5,7 +5,7 @@ This is the JavaScript SDK for Vigilant (https://github.com/vigilant-run/vigilan
 ## Installation
 
 ```bash
-npm install @vigilant-run/js
+npm install vigilant-js
 ```
 
 ## Usage
