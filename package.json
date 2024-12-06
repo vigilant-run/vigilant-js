@@ -1,10 +1,17 @@
 {
   "name": "vigilant-js",
   "author": "Vigilant",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "SDK for Vigilant",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "files": [
     "dist"
   ],
