@@ -1,7 +1,7 @@
 {
   "name": "vigilant-js",
   "author": "Vigilant",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "SDK for Vigilant",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

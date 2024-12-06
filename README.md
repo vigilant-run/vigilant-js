@@ -14,12 +14,11 @@ npm install vigilant-js
 import { Logger } from 'vigilant-js'
 
 const logger = new Logger({
-  name: 'my-service', // Service name for identification
-  url: 'otel.vigilant.run:4317', // OTLP gRPC endpoint
-  token: 'tk_1234567890', // Your Vigilant Token
-  passthrough: true, // Also log to console (optional)
-  attributes: {
-    // Default attributes (optional)
+  name: 'service-name',         // Service name for identification
+  url: 'log.vigilant.run:4317', // OTLP gRPC endpoint
+  token: 'tk_1234567890',       // Your Vigilant Token
+  passthrough: true,            // Also log to console (optional)
+  attributes: {                 // Default attributes (optional)
     environment: 'production',
   },
 })

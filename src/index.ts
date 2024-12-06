@@ -1,1 +1,1 @@
-export * from './client'
+export { Logger, LoggerOptions, LogLevel } from './client'

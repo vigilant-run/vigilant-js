@@ -9,7 +9,7 @@ import {
 } from '@opentelemetry/sdk-logs'
 import { credentials } from '@grpc/grpc-js'
 
-interface LoggerOptions {
+export interface LoggerOptions {
   name?: string
   attributes?: LogAttributes
   url?: string
@@ -19,14 +19,14 @@ interface LoggerOptions {
   otelLogger?: OTELLogger
 }
 
-enum LogLevel {
+export enum LogLevel {
   INFO = 'INFO',
   WARN = 'WARN',
   ERROR = 'ERROR',
   DEBUG = 'DEBUG',
 }
 
-class Logger {
+export class Logger {
   private otelLogger: OTELLogger
   private attributes: LogAttributes
   private passthrough: boolean
@@ -172,5 +172,3 @@ function createOTELLogger(config: OTELConfig): OTELLogger {
 
   return loggerProvider.getLogger(name)
 }
-
-export { Logger, LoggerOptions, LogLevel }
