@@ -155,13 +155,9 @@ function createOTELLogger(config: OTELConfig): OTELLogger {
   } = config
 
   const exporter = new OTLPLogExporter({
-    url,
-    credentials: insecure
-      ? credentials.createInsecure()
-      : credentials.createSsl(),
-    headers: {
-      'x-vigilant-token': token,
-    },
+    url: url,
+    credentials: insecure ? credentials.createInsecure() : undefined,
+    headers: { 'x-vigilant-token': token },
   })
 
   const resource = new Resource({
