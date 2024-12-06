@@ -21,29 +21,9 @@ jobs:
         run: npm ci
 
       - name: Build package
-        run: |
-          npm run build:cjs
-          npm run build:esm
-
-      - name: Verify build outputs
-        run: |
-          if [ ! -d "dist/cjs" ]; then
-            echo "CJS build is missing"
-            exit 1
-          fi
-          if [ ! -d "dist/esm" ]; then
-            echo "ESM build is missing"
-            exit 1
-          fi
-          if [ ! -d "dist/types" ]; then
-            echo "Types are missing"
-            exit 1
-          fi
-
-      - name: Pack package
-        run: npm pack
+        run: npm run build
 
       - name: Publish to NPM
-        run: npm publish --access public
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
