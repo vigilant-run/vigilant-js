@@ -1,5 +1,10 @@
 import { Attributes } from '@opentelemetry/api'
-import { LogAttributes, Logger as OTELLogger } from '@opentelemetry/api-logs'
+import {
+  LogAttributes,
+  LogRecord,
+  Logger as OTELLogger,
+  SeverityNumber,
+} from '@opentelemetry/api-logs'
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-grpc'
 import { Resource } from '@opentelemetry/resources'
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
@@ -91,10 +96,11 @@ export class Logger {
     attrs: LogAttributes,
     error: Error | null = null
   ) {
-    const record = {
-      severity: this.getSeverity(level),
+    const record: LogRecord = {
+      timestamp: Date.now(),
+      severityNumber: this.getSeverity(level),
+      severityText: level,
       body: message,
-      timestamp: new Date(),
       attributes: attrs,
     }
 
@@ -105,18 +111,18 @@ export class Logger {
     this.otelLogger.emit(record)
   }
 
-  private getSeverity(level: LogLevel): number {
+  private getSeverity(level: LogLevel): SeverityNumber {
     switch (level) {
-      case LogLevel.INFO:
-        return 9
-      case LogLevel.WARN:
-        return 13
-      case LogLevel.ERROR:
-        return 17
       case LogLevel.DEBUG:
-        return 5
+        return SeverityNumber.DEBUG
+      case LogLevel.INFO:
+        return SeverityNumber.INFO
+      case LogLevel.WARN:
+        return SeverityNumber.WARN
+      case LogLevel.ERROR:
+        return SeverityNumber.ERROR
       default:
-        return 9
+        return SeverityNumber.INFO
     }
   }
 
