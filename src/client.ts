@@ -7,7 +7,7 @@ import {
   LoggerProvider,
   BatchLogRecordProcessor,
 } from '@opentelemetry/sdk-logs'
-import { credentials } from '@grpc/grpc-js'
+import { credentials, Metadata } from '@grpc/grpc-js'
 
 export interface LoggerOptions {
   name?: string
@@ -148,16 +148,21 @@ interface OTELConfig {
 
 function createOTELLogger(config: OTELConfig): OTELLogger {
   const {
-    url = 'otel.vigilant.run:4317',
+    url = 'log.vigilant.run:4317',
     token = 'tk_1234567890',
     name = 'example',
     insecure = false,
   } = config
 
+  const metadata = new Metadata()
+  metadata.set('x-vigilant-token', token)
+
   const exporter = new OTLPLogExporter({
     url: url,
+    metadata: metadata,
     credentials: insecure ? credentials.createInsecure() : undefined,
-    headers: { 'x-vigilant-token': token },
+    timeoutMillis: 10000,
+    concurrencyLimit: 10,
   })
 
   const resource = new Resource({
@@ -168,7 +173,13 @@ function createOTELLogger(config: OTELConfig): OTELLogger {
     resource,
   })
 
-  loggerProvider.addLogRecordProcessor(new BatchLogRecordProcessor(exporter))
+  loggerProvider.addLogRecordProcessor(
+    new BatchLogRecordProcessor(exporter, {
+      maxExportBatchSize: 512,
+      scheduledDelayMillis: 5000,
+      exportTimeoutMillis: 30000,
+    })
+  )
 
   return loggerProvider.getLogger(name)
 }
