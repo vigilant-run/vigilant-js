@@ -78,13 +78,18 @@ export class Logger {
     }
   }
 
-  error(message: string, attrs: Attributes = {}) {
+  error(message: string, attrs: Attributes = {}, error: Error | null = null) {
     const callerAttrs = this.getCallerAttrs()
-    this.log(LogLevel.ERROR, message, {
-      ...this.attributes,
-      ...callerAttrs,
-      ...attrs,
-    })
+    this.log(
+      LogLevel.ERROR,
+      message,
+      {
+        ...this.attributes,
+        ...callerAttrs,
+        ...attrs,
+      },
+      error
+    )
     if (this.passthrough) {
       console.error(message)
     }

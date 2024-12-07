@@ -39,9 +39,6 @@ logger.info('Order processed', {
 try {
   // ... some code that might throw
 } catch (error) {
-  logger.error('Operation failed', error)
+  logger.error('Operation failed', {}, error)
 }
-
-// Format string logging
-logger.debugf('Processing user %s with role %s', 'john', 'admin')
 ```
