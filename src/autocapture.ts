@@ -22,22 +22,22 @@ export class AutocaptureLogger extends Logger {
 
   protected debugPassthrough(message: string) {
     if (!this.passthrough) return
-    this.originalStderrWrite(message)
+    this.originalStderrWrite(message + '\n')
   }
 
   protected infoPassthrough(message: string) {
     if (!this.passthrough) return
-    this.originalStderrWrite(message)
+    this.originalStderrWrite(message + '\n')
   }
 
   protected warnPassthrough(message: string) {
     if (!this.passthrough) return
-    this.originalStderrWrite(message)
+    this.originalStderrWrite(message + '\n')
   }
 
   protected errorPassthrough(message: string) {
     if (!this.passthrough) return
-    this.originalStderrWrite(message)
+    this.originalStderrWrite(message + '\n')
   }
 
   private redirectStdout() {
