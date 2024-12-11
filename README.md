@@ -9,7 +9,9 @@ npm install vigilant-js
 ```
 
 ## Usage
+The standard logger is a wrapper around the OpenTelemetry logger. It allows you to log messages with attributes and metadata. The logs are sent to Vigilant and viewable in the dashboard.
 
+### TypeScript
 ```typescript
 import { Logger } from 'vigilant-js'
 
@@ -43,6 +45,7 @@ try {
 }
 ```
 
+### JavaScript
 ```javascript
 const { Logger } = require('vigilant-js')
 
@@ -74,4 +77,59 @@ try {
 } catch (error) {
   logger.error('Operation failed', {}, error)
 }
+```
+
+## Usage (Autocapture)
+There is an additional logger that captures stdout and stderr and logs it to Vigilant. This is allow you to capture logs without using the logger. There is no metadata or attributes attached to the logs.
+
+### TypeScript
+```typescript
+import { AutocaptureLogger } from 'vigilant-js'
+
+// Create the logger
+const logger = new AutocaptureLogger({
+  name: 'service-name',         // Service name for identification
+  url: 'log.vigilant.run:4317', // OTLP gRPC endpoint
+  token: 'tk_1234567890',       // Your Vigilant Token
+  passthrough: true,            // Also log to console (optional)
+  attributes: {                 // Default attributes (optional)
+    environment: 'production',
+  },
+})
+
+// Enable the logger
+logger.enable()
+
+// Log some messages 
+console.log('Hello, world!')
+console.error('Error!')
+
+// Disable the logger
+logger.disable()
+```
+
+### JavaScript
+```javascript
+const { AutocaptureLogger } = require('vigilant-js')
+
+// Create the logger  
+const logger = new AutocaptureLogger({
+  name: 'service-name',         // Service name for identification
+  url: 'log.vigilant.run:4317', // OTLP gRPC endpoint
+  token: 'tk_1234567890',       // Your Vigilant Token
+  passthrough: true,            // Also log to console (optional)
+  attributes: {                 // Default attributes (optional)
+    environment: 'production',
+  },
+})
+
+// Enable the logger
+logger.enable()
+
+// Log some messages 
+console.log('Hello, world!')
+console.error('Error!')
+
+// Disable the logger
+logger.disable()
 ```
