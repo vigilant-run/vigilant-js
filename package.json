@@ -3,17 +3,19 @@
   "author": "Vigilant",
   "version": "1.1.0",
   "description": "SDK for Vigilant",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/esm/index.js"
     }
   },
   "files": [
-    "dist"
+    "dist/esm",
+    "dist/cjs",
+    "dist/types"
   ],
   "publishConfig": {
     "access": "public"
@@ -23,17 +25,24 @@
     "sdk"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc --project tsconfig.esm.json",
+    "build:cjs": "node build.js",
     "format": "prettier --write ."
   },
   "devDependencies": {
     "@types/node": "^20.11.19",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "esbuild": "^0.19.2",
+    "prettier": "^3.1.0"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/api-logs": "^0.56.0",
     "@opentelemetry/exporter-logs-otlp-grpc": "^0.56.0",
-    "@opentelemetry/resources": "^1.29.0"
+    "@opentelemetry/resources": "^1.29.0",
+    "@opentelemetry/semantic-conventions": "^1.15.0",
+    "@opentelemetry/sdk-logs": "^0.56.0",
+    "@grpc/grpc-js": "^1.8.22"
   }
 }
