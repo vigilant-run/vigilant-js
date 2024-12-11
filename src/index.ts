@@ -1,1 +1,2 @@
-export { Logger, LoggerOptions, LogLevel } from './client.js'
+export { Logger, LoggerOptions, LogLevel } from './logger.js'
+export { AutocaptureLogger } from './autocapture.js'

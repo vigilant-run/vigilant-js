@@ -1,18 +1,11 @@
 import { Attributes } from '@opentelemetry/api'
 import {
+  Logger as OTELLogger,
   LogAttributes,
   LogRecord,
-  Logger as OTELLogger,
   SeverityNumber,
 } from '@opentelemetry/api-logs'
-import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-grpc'
-import { Resource } from '@opentelemetry/resources'
-import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
-import {
-  LoggerProvider,
-  BatchLogRecordProcessor,
-} from '@opentelemetry/sdk-logs'
-import { credentials, Metadata } from '@grpc/grpc-js'
+import { createOTELLogger } from './otel.js'
 
 export interface LoggerOptions {
   name?: string
@@ -32,14 +25,14 @@ export enum LogLevel {
 }
 
 export class Logger {
-  private otelLogger: OTELLogger
-  private attributes: LogAttributes
-  private passthrough: boolean
+  protected otelLogger: OTELLogger
+  protected attributes: LogAttributes
+  protected passthrough: boolean
 
   constructor(options: LoggerOptions) {
-    this.otelLogger = options.otelLogger || this.getOtelLogger(options)
+    this.otelLogger = options.otelLogger || createOTELLogger(options)
     this.attributes = options.attributes || {}
-    this.passthrough = options.passthrough || false
+    this.passthrough = options.passthrough || true
   }
 
   debug(message: string, attrs: Attributes = {}) {
@@ -49,9 +42,7 @@ export class Logger {
       ...callerAttrs,
       ...attrs,
     })
-    if (this.passthrough) {
-      console.log(message)
-    }
+    this.debugPassthrough(message)
   }
 
   info(message: string, attrs: Attributes = {}) {
@@ -61,9 +52,7 @@ export class Logger {
       ...callerAttrs,
       ...attrs,
     })
-    if (this.passthrough) {
-      console.log(message)
-    }
+    this.infoPassthrough(message)
   }
 
   warn(message: string, attrs: Attributes = {}) {
@@ -73,9 +62,7 @@ export class Logger {
       ...callerAttrs,
       ...attrs,
     })
-    if (this.passthrough) {
-      console.warn(message)
-    }
+    this.warnPassthrough(message)
   }
 
   error(message: string, attrs: Attributes = {}, error: Error | null = null) {
@@ -88,18 +75,36 @@ export class Logger {
         ...callerAttrs,
         ...attrs,
       },
-      error
+      error,
     )
-    if (this.passthrough) {
-      console.error(message)
-    }
+    this.errorPassthrough(message)
+  }
+
+  protected debugPassthrough(message: string) {
+    if (!this.passthrough) return
+    console.debug(message)
+  }
+
+  protected infoPassthrough(message: string) {
+    if (!this.passthrough) return
+    console.log(message)
+  }
+
+  protected warnPassthrough(message: string) {
+    if (!this.passthrough) return
+    console.warn(message)
+  }
+
+  protected errorPassthrough(message: string) {
+    if (!this.passthrough) return
+    console.error(message)
   }
 
   private log(
     level: LogLevel,
     message: string,
     attrs: LogAttributes,
-    error: Error | null = null
+    error: Error | null = null,
   ) {
     const record: LogRecord = {
       timestamp: Date.now(),
@@ -144,53 +149,4 @@ export class Logger {
       'caller.line': parseInt(match[3] || '0', 10),
     }
   }
-
-  private getOtelLogger(options: LoggerOptions): OTELLogger {
-    return createOTELLogger(options)
-  }
-}
-
-interface OTELConfig {
-  url?: string
-  token?: string
-  name?: string
-  insecure?: boolean
-}
-
-function createOTELLogger(config: OTELConfig): OTELLogger {
-  const {
-    url = 'log.vigilant.run:4317',
-    token = 'tk_1234567890',
-    name = 'example',
-    insecure = false,
-  } = config
-
-  const metadata = new Metadata()
-  metadata.set('x-vigilant-token', token)
-
-  const exporter = new OTLPLogExporter({
-    url: url,
-    metadata: metadata,
-    credentials: insecure ? credentials.createInsecure() : undefined,
-    timeoutMillis: 10000,
-    concurrencyLimit: 10,
-  })
-
-  const resource = new Resource({
-    [ATTR_SERVICE_NAME]: name,
-  })
-
-  const loggerProvider = new LoggerProvider({
-    resource,
-  })
-
-  loggerProvider.addLogRecordProcessor(
-    new BatchLogRecordProcessor(exporter, {
-      maxExportBatchSize: 512,
-      scheduledDelayMillis: 5000,
-      exportTimeoutMillis: 30000,
-    })
-  )
-
-  return loggerProvider.getLogger(name)
 }
