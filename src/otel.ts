@@ -16,7 +16,7 @@ interface OTELConfig {
   insecure?: boolean
 }
 
-export function createOTELLogger(config: OTELConfig): Logger {
+export function createOTELProvider(config: OTELConfig): LoggerProvider {
   const {
     url = 'log.vigilant.run:4317',
     token = 'tk_1234567890',
@@ -51,5 +51,5 @@ export function createOTELLogger(config: OTELConfig): Logger {
     }),
   )
 
-  return loggerProvider.getLogger(name)
+  return loggerProvider
 }

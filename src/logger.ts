@@ -5,7 +5,8 @@ import {
   LogRecord,
   SeverityNumber,
 } from '@opentelemetry/api-logs'
-import { createOTELLogger } from './otel.js'
+import { createOTELProvider } from './otel.js'
+import { LoggerProvider } from '@opentelemetry/sdk-logs'
 
 export interface LoggerOptions {
   name?: string
@@ -14,7 +15,7 @@ export interface LoggerOptions {
   token?: string
   passthrough?: boolean
   insecure?: boolean
-  otelLogger?: OTELLogger
+  internalProvider?: LoggerProvider
 }
 
 export enum LogLevel {
@@ -25,17 +26,19 @@ export enum LogLevel {
 }
 
 export class Logger {
-  protected otelLogger: OTELLogger
+  protected provider: LoggerProvider
+  protected logger: OTELLogger
   protected attributes: LogAttributes
   protected passthrough: boolean
 
   constructor(options: LoggerOptions) {
-    this.otelLogger = options.otelLogger || createOTELLogger(options)
+    this.provider = options.internalProvider || createOTELProvider(options)
+    this.logger = this.provider.getLogger(options.name || 'default')
     this.attributes = options.attributes || {}
     this.passthrough = options.passthrough || true
   }
 
-  debug(message: string, attrs: Attributes = {}) {
+  debug(message: string, attrs: Attributes = {}): void {
     const callerAttrs = this.getCallerAttrs()
     this.log(LogLevel.DEBUG, message, {
       ...this.attributes,
@@ -45,7 +48,7 @@ export class Logger {
     this.debugPassthrough(message)
   }
 
-  info(message: string, attrs: Attributes = {}) {
+  info(message: string, attrs: Attributes = {}): void {
     const callerAttrs = this.getCallerAttrs()
     this.log(LogLevel.INFO, message, {
       ...this.attributes,
@@ -55,7 +58,7 @@ export class Logger {
     this.infoPassthrough(message)
   }
 
-  warn(message: string, attrs: Attributes = {}) {
+  warn(message: string, attrs: Attributes = {}): void {
     const callerAttrs = this.getCallerAttrs()
     this.log(LogLevel.WARN, message, {
       ...this.attributes,
@@ -65,7 +68,11 @@ export class Logger {
     this.warnPassthrough(message)
   }
 
-  error(message: string, attrs: Attributes = {}, error: Error | null = null) {
+  error(
+    message: string,
+    attrs: Attributes = {},
+    error: Error | null = null,
+  ): void {
     const callerAttrs = this.getCallerAttrs()
     this.log(
       LogLevel.ERROR,
@@ -80,22 +87,26 @@ export class Logger {
     this.errorPassthrough(message)
   }
 
-  protected debugPassthrough(message: string) {
+  async shutdown(): Promise<void> {
+    await this.provider.shutdown()
+  }
+
+  protected debugPassthrough(message: string): void {
     if (!this.passthrough) return
     console.debug(message)
   }
 
-  protected infoPassthrough(message: string) {
+  protected infoPassthrough(message: string): void {
     if (!this.passthrough) return
     console.log(message)
   }
 
-  protected warnPassthrough(message: string) {
+  protected warnPassthrough(message: string): void {
     if (!this.passthrough) return
     console.warn(message)
   }
 
-  protected errorPassthrough(message: string) {
+  protected errorPassthrough(message: string): void {
     if (!this.passthrough) return
     console.error(message)
   }
@@ -105,7 +116,7 @@ export class Logger {
     message: string,
     attrs: LogAttributes,
     error: Error | null = null,
-  ) {
+  ): void {
     const record: LogRecord = {
       timestamp: Date.now(),
       severityNumber: this.getSeverity(level),
@@ -118,7 +129,7 @@ export class Logger {
       record.attributes = { ...record.attributes, error: error.message }
     }
 
-    this.otelLogger.emit(record)
+    this.logger.emit(record)
   }
 
   private getSeverity(level: LogLevel): SeverityNumber {
