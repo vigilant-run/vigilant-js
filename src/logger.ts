@@ -7,6 +7,7 @@ import {
 } from '@opentelemetry/api-logs'
 import { createOTELProvider } from './otel.js'
 import { LoggerProvider } from '@opentelemetry/sdk-logs'
+import { getLoggerAttributes } from './storage.js'
 
 export interface LoggerOptions {
   name?: string
@@ -40,9 +41,11 @@ export class Logger {
 
   debug(message: string, attrs: Attributes = {}): void {
     const callerAttrs = this.getCallerAttrs()
+    const loggerAttrs = this.getStoredAttributes()
     this.log(LogLevel.DEBUG, message, {
       ...this.attributes,
       ...callerAttrs,
+      ...loggerAttrs,
       ...attrs,
     })
     this.debugPassthrough(message)
@@ -50,9 +53,11 @@ export class Logger {
 
   info(message: string, attrs: Attributes = {}): void {
     const callerAttrs = this.getCallerAttrs()
+    const loggerAttrs = this.getStoredAttributes()
     this.log(LogLevel.INFO, message, {
       ...this.attributes,
       ...callerAttrs,
+      ...loggerAttrs,
       ...attrs,
     })
     this.infoPassthrough(message)
@@ -60,9 +65,11 @@ export class Logger {
 
   warn(message: string, attrs: Attributes = {}): void {
     const callerAttrs = this.getCallerAttrs()
+    const loggerAttrs = this.getStoredAttributes()
     this.log(LogLevel.WARN, message, {
       ...this.attributes,
       ...callerAttrs,
+      ...loggerAttrs,
       ...attrs,
     })
     this.warnPassthrough(message)
@@ -74,12 +81,14 @@ export class Logger {
     error: Error | null = null,
   ): void {
     const callerAttrs = this.getCallerAttrs()
+    const loggerAttrs = this.getStoredAttributes()
     this.log(
       LogLevel.ERROR,
       message,
       {
         ...this.attributes,
         ...callerAttrs,
+        ...loggerAttrs,
         ...attrs,
       },
       error,
@@ -159,5 +168,9 @@ export class Logger {
       'caller.file': match[2] || '',
       'caller.line': parseInt(match[3] || '0', 10),
     }
+  }
+
+  private getStoredAttributes(): Attributes {
+    return getLoggerAttributes()
   }
 }
