@@ -76,9 +76,10 @@ await logger.shutdown()
 ```
 
 ## Logging Usage (Attributes)
+Note: This is only avaiable in a Node.js environment.
 
 ```typescript
-import { addAttribute, clearAttributes, removeAttribute } from 'vigilant-js'
+import { addAttributes, clearAttributes, removeAttributes } from 'vigilant-js'
 
 // Create a logger
 const logger = new AutocaptureLogger({
@@ -92,11 +93,11 @@ const logger = new AutocaptureLogger({
 logger.enable()
 
 // Add an attribute
-addAttribute({ user_id: '1', another_user_id: '2' }, () => {
+addAttributes({ user_id: '1', another_user_id: '2' }, () => {
   console.log('Testing with two attributes')
 
   // Remove one attribute
-  removeAttribute('user_id', () => {
+  removeAttributes(['user_id'], () => {
     console.log('Testing with one attribute')
 
     // Clear all attributes

@@ -41,7 +41,7 @@ export function initLoggerStorage(): void {
   }
 }
 
-export function addAttribute(
+export function addAttributes(
   attributes: Attributes,
   callback: () => void,
 ): void {
@@ -68,7 +68,7 @@ export function clearAttributes(callback: () => void): void {
   }
 }
 
-export function removeAttribute(key: string, callback: () => void): void {
+export function removeAttributes(keys: string[], callback: () => void): void {
   if (!isInitialized) {
     initLoggerStorage()
   }
@@ -77,7 +77,7 @@ export function removeAttribute(key: string, callback: () => void): void {
   } else {
     const currentStore = storage.getStore() || {}
     const updatedStore = Object.fromEntries(
-      Object.entries(currentStore).filter(([k]) => k !== key),
+      Object.entries(currentStore).filter(([key]) => !keys.includes(key)),
     )
     storage.run(updatedStore, callback)
   }
