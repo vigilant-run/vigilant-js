@@ -1,66 +1,95 @@
-import { Attributes } from '@opentelemetry/api'
-import { LogAttributes } from '@opentelemetry/api-logs'
+import { Attributes } from './attributes'
 
-interface AsyncLocalStorageConstructor {
-  new <T>(): {
-    run(store: T, callback: (...args: any[]) => void): void
-    getStore(): T | undefined
-  }
+interface InternalAsyncStorage<T> {
+  run(store: T, callback: (...args: any[]) => void): void
+  getStore(): T | undefined
 }
 
-let asyncLocalStorage: AsyncLocalStorageConstructor | null = null
+let storage: InternalAsyncStorage<Attributes> | null = null
 let isInitialized = false
 
-class NoopAsyncLocalStorage<T> {
-  run(store: T, callback: (...args: any[]) => void): void {
-    callback()
-  }
-  getStore(): T | undefined {
-    return undefined
-  }
-}
+export class LoggerStorage {
+  private storage: InternalAsyncStorage<Attributes> | null = null
 
-export class AttributeStorage {
-  private static localStorage = asyncLocalStorage
-    ? new asyncLocalStorage<Attributes>()
-    : new NoopAsyncLocalStorage<Attributes>()
-
-  static run(attributes: Attributes, callback: () => void): void {
-    this.localStorage.run(attributes, callback)
+  constructor(storage: InternalAsyncStorage<Attributes> | null = null) {
+    this.storage = storage
   }
 
-  static getStore(): Attributes | undefined {
-    return this.localStorage.getStore()
+  run(attributes: Attributes, callback: () => void): void {
+    if (!this.storage) {
+      callback()
+    } else {
+      this.storage.run(attributes, callback)
+    }
+  }
+
+  getStore(): Attributes | undefined {
+    return this.storage?.getStore()
   }
 }
 
-export function initAttributeStorage(): void {
+export function initLoggerStorage(): void {
   try {
-    const asyncHooks = require('node:async_hooks')
-    asyncLocalStorage = asyncHooks.AsyncLocalStorage
+    const { AsyncLocalStorage } = require('node:async_hooks')
+    const asyncLocalStorage = new AsyncLocalStorage()
+    storage = new LoggerStorage(asyncLocalStorage)
   } catch {
-    console.error(
-      'AsyncLocalStorage is not available, it is only supported in Node.js',
-    )
-    asyncLocalStorage = null
+    console.error('AsyncLocalStorage is not available')
+    storage = null
   } finally {
     isInitialized = true
   }
 }
 
-export function addLoggerAttribute(
+export function addAttribute(
   attributes: Attributes,
   callback: () => void,
 ): void {
   if (!isInitialized) {
-    initAttributeStorage()
+    initLoggerStorage()
   }
-  AttributeStorage.run(attributes, callback)
+  if (!storage) {
+    callback()
+  } else {
+    const currentStore = storage.getStore() || {}
+    const updatedStore = { ...currentStore, ...attributes }
+    storage.run(updatedStore, callback)
+  }
 }
 
-export function getLoggerAttributes(): Attributes {
+export function clearAttributes(callback: () => void): void {
   if (!isInitialized) {
-    initAttributeStorage()
+    initLoggerStorage()
   }
-  return AttributeStorage.getStore() || {}
+  if (!storage) {
+    callback()
+  } else {
+    storage.run({}, callback)
+  }
+}
+
+export function removeAttribute(key: string, callback: () => void): void {
+  if (!isInitialized) {
+    initLoggerStorage()
+  }
+  if (!storage) {
+    callback()
+  } else {
+    const currentStore = storage.getStore() || {}
+    const updatedStore = Object.fromEntries(
+      Object.entries(currentStore).filter(([k]) => k !== key),
+    )
+    storage.run(updatedStore, callback)
+  }
+}
+
+export function getAttributes(): Attributes {
+  if (!isInitialized) {
+    initLoggerStorage()
+  }
+  if (!storage) {
+    return {}
+  } else {
+    return storage.getStore() || {}
+  }
 }

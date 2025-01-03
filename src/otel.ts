@@ -1,6 +1,5 @@
 import { credentials } from '@grpc/grpc-js'
 import { Metadata } from '@grpc/grpc-js'
-import { Logger } from '@opentelemetry/api-logs'
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-grpc'
 import { Resource } from '@opentelemetry/resources'
 import {

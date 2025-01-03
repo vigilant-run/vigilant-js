@@ -8,7 +8,7 @@ This is the JavaScript SDK for Vigilant (https://vigilant.run).
 npm install vigilant-js
 ```
 
-## Usage (Standard)
+## Logging Usage (Standard)
 The standard logger is a wrapper around the OpenTelemetry logger. It allows you to log messages with attributes and metadata. The logs are sent to Vigilant and viewable in the dashboard.
 
 ```typescript
@@ -47,7 +47,7 @@ try {
 await logger.shutdown()
 ```
 
-## Usage (Autocapture)
+## Logging Usage (Autocapture)
 There is an additional logger that captures stdout and stderr and logs it to Vigilant. This is allow you to capture logs without using the logger. There is no metadata or attributes attached to the logs.
 
 ```typescript
@@ -72,5 +72,40 @@ console.log('Hello, world!')
 console.error('Error!')
 
 // Application shutdown
+await logger.shutdown()
+```
+
+## Logging Usage (Attributes)
+
+```typescript
+import { addAttribute, clearAttributes, removeAttribute } from 'vigilant-js'
+
+// Create a logger
+const logger = new AutocaptureLogger({
+  name: 'service-name',
+  url: 'log.vigilant.run:4317',
+  token: 'tk_0123456789',
+  passthrough: true,
+})
+
+// Enable the logger
+logger.enable()
+
+// Add an attribute
+addAttribute({ user_id: '1', another_user_id: '2' }, () => {
+  console.log('Testing with two attributes')
+
+  // Remove one attribute
+  removeAttribute('user_id', () => {
+    console.log('Testing with one attribute')
+
+    // Clear all attributes
+    clearAttributes(() => {
+      console.log('Testing without attributes')
+    })
+  })
+})
+
+// Shutdown the logger
 await logger.shutdown()
 ```

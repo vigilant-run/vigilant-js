@@ -58,10 +58,10 @@ export class AutocaptureLogger extends Logger {
       }
 
       if (typeof chunk === 'string') {
-        loggerInfo(chunk)
+        loggerInfo(chunk.trimEnd())
       } else {
         const message = Buffer.from(chunk).toString(encoding || 'utf8')
-        loggerInfo(message)
+        loggerInfo(message.trimEnd())
       }
 
       if (cb) {
@@ -90,10 +90,10 @@ export class AutocaptureLogger extends Logger {
       }
 
       if (typeof chunk === 'string') {
-        loggerError(chunk)
+        loggerError(chunk.trimEnd())
       } else {
         const message = Buffer.from(chunk).toString(encoding || 'utf8')
-        loggerError(message)
+        loggerError(message.trimEnd())
       }
 
       if (cb) {

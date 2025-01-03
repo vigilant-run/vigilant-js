@@ -1,4 +1,3 @@
-import { Attributes } from '@opentelemetry/api'
 import {
   Logger as OTELLogger,
   LogAttributes,
@@ -7,11 +6,12 @@ import {
 } from '@opentelemetry/api-logs'
 import { createOTELProvider } from './otel.js'
 import { LoggerProvider } from '@opentelemetry/sdk-logs'
-import { getLoggerAttributes } from './storage.js'
+import { getAttributes } from './storage.js'
+import { Attributes } from './attributes.js'
 
 export interface LoggerOptions {
   name?: string
-  attributes?: LogAttributes
+  attributes?: Attributes
   url?: string
   token?: string
   passthrough?: boolean
@@ -29,7 +29,7 @@ export enum LogLevel {
 export class Logger {
   protected provider: LoggerProvider
   protected logger: OTELLogger
-  protected attributes: LogAttributes
+  protected attributes: Attributes
   protected passthrough: boolean
 
   constructor(options: LoggerOptions) {
@@ -171,6 +171,6 @@ export class Logger {
   }
 
   private getStoredAttributes(): Attributes {
-    return getLoggerAttributes()
+    return getAttributes()
   }
 }
