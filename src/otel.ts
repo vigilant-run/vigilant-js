@@ -30,8 +30,8 @@ export function createOTELProvider(config: OTELConfig): LoggerProvider {
     url: url,
     metadata: metadata,
     credentials: insecure ? credentials.createInsecure() : undefined,
-    timeoutMillis: 10000,
     concurrencyLimit: 10,
+    timeoutMillis: 10000,
   })
 
   const resource = new Resource({
@@ -44,9 +44,10 @@ export function createOTELProvider(config: OTELConfig): LoggerProvider {
 
   loggerProvider.addLogRecordProcessor(
     new BatchLogRecordProcessor(exporter, {
-      maxExportBatchSize: 512,
-      scheduledDelayMillis: 5000,
-      exportTimeoutMillis: 30000,
+      scheduledDelayMillis: 0,
+      maxExportBatchSize: 1000,
+      exportTimeoutMillis: 1000,
+      maxQueueSize: 1000,
     }),
   )
 
