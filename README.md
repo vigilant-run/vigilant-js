@@ -2,6 +2,10 @@
 
 This is the JavaScript SDK for Vigilant (https://vigilant.run).
 
+## Requirements
+
+- Node.js v16.4.0+ or Bun v1.0.0+
+
 ## Installation
 
 ```bash
