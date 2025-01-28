@@ -9,14 +9,6 @@ esbuild
     platform: 'node',
     format: 'cjs',
     sourcemap: true,
-    external: [
-      '@opentelemetry/api',
-      '@opentelemetry/api-logs',
-      '@opentelemetry/exporter-logs-otlp-grpc',
-      '@opentelemetry/resources',
-      '@opentelemetry/semantic-conventions',
-      '@opentelemetry/sdk-logs',
-      '@grpc/grpc-js',
-    ],
+    external: [],
   })
   .catch(() => process.exit(1))

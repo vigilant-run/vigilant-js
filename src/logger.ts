@@ -1,176 +1,264 @@
-import {
-  Logger as OTELLogger,
-  LogAttributes,
-  LogRecord,
-  SeverityNumber,
-} from '@opentelemetry/api-logs'
-import { createOTELProvider } from './otel.js'
-import { LoggerProvider } from '@opentelemetry/sdk-logs'
 import { getAttributes } from './storage.js'
 import { Attributes } from './attributes.js'
+import axios from 'axios'
 
 export interface LoggerOptions {
   name?: string
-  attributes?: Attributes
-  url?: string
+  endpoint?: string
   token?: string
-  passthrough?: boolean
   insecure?: boolean
-  internalProvider?: LoggerProvider
-}
-
-export enum LogLevel {
-  INFO = 'INFO',
-  WARN = 'WARN',
-  ERROR = 'ERROR',
-  DEBUG = 'DEBUG',
+  passthrough?: boolean
 }
 
 export class Logger {
-  protected provider: LoggerProvider
-  protected logger: OTELLogger
-  protected attributes: Attributes
-  protected passthrough: boolean
+  private originalStdoutWrite: typeof process.stdout.write
+  private originalStderrWrite: typeof process.stderr.write
+
+  private passthrough: boolean
+  private name: string
+  private endpoint: string
+  private token: string
+  private insecure: boolean
+
+  private logsQueue: log[] = []
+  private batchStop = false
+  private batcherPromise: Promise<void> | null = null
+  private batchInterval = 100
+  private maxBatchSize = 100
 
   constructor(options: LoggerOptions) {
-    this.provider = options.internalProvider || createOTELProvider(options)
-    this.logger = this.provider.getLogger(options.name || 'default')
-    this.attributes = options.attributes || {}
-    this.passthrough = options.passthrough || true
+    this.originalStdoutWrite = process.stdout.write.bind(process.stdout)
+    this.originalStderrWrite = process.stderr.write.bind(process.stderr)
+
+    this.passthrough = options.passthrough ?? true
+    this.name = options.name ?? 'sample-app'
+    this.endpoint = options.endpoint ?? 'ingress.vigilant.run'
+    this.token = options.token ?? 'tk_1234567890'
+    this.insecure = options.insecure ?? false
+
+    this.startBatcher()
   }
 
   debug(message: string, attrs: Attributes = {}): void {
-    const callerAttrs = this.getCallerAttrs()
     const loggerAttrs = this.getStoredAttributes()
-    this.log(LogLevel.DEBUG, message, {
-      ...this.attributes,
-      ...callerAttrs,
-      ...loggerAttrs,
-      ...attrs,
-    })
-    this.debugPassthrough(message)
+    this.log(logLevel.DEBUG, message, { ...loggerAttrs, ...attrs })
+    this.stdOutPassthrough(message)
   }
 
   info(message: string, attrs: Attributes = {}): void {
-    const callerAttrs = this.getCallerAttrs()
     const loggerAttrs = this.getStoredAttributes()
-    this.log(LogLevel.INFO, message, {
-      ...this.attributes,
-      ...callerAttrs,
-      ...loggerAttrs,
-      ...attrs,
-    })
-    this.infoPassthrough(message)
+    this.log(logLevel.INFO, message, { ...loggerAttrs, ...attrs })
+    this.stdOutPassthrough(message)
   }
 
   warn(message: string, attrs: Attributes = {}): void {
-    const callerAttrs = this.getCallerAttrs()
     const loggerAttrs = this.getStoredAttributes()
-    this.log(LogLevel.WARN, message, {
-      ...this.attributes,
-      ...callerAttrs,
-      ...loggerAttrs,
-      ...attrs,
-    })
-    this.warnPassthrough(message)
+    this.log(logLevel.WARNING, message, { ...loggerAttrs, ...attrs })
+    this.stdOutPassthrough(message)
   }
 
   error(
     message: string,
-    attrs: Attributes = {},
     error: Error | null = null,
+    attrs: Attributes = {},
   ): void {
-    const callerAttrs = this.getCallerAttrs()
     const loggerAttrs = this.getStoredAttributes()
-    this.log(
-      LogLevel.ERROR,
-      message,
-      {
-        ...this.attributes,
-        ...callerAttrs,
-        ...loggerAttrs,
-        ...attrs,
-      },
-      error,
-    )
-    this.errorPassthrough(message)
+    this.log(logLevel.ERROR, message, { ...loggerAttrs, ...attrs }, error)
+    this.stdErrPassthrough(message)
+  }
+
+  autocapture_enable() {
+    this.redirectStdout()
+    this.redirectStderr()
+  }
+
+  autocapture_disable() {
+    process.stdout.write = this.originalStdoutWrite
+    process.stderr.write = this.originalStderrWrite
   }
 
   async shutdown(): Promise<void> {
-    await this.provider.shutdown()
-  }
-
-  protected debugPassthrough(message: string): void {
-    if (!this.passthrough) return
-    console.debug(message)
-  }
-
-  protected infoPassthrough(message: string): void {
-    if (!this.passthrough) return
-    console.log(message)
-  }
-
-  protected warnPassthrough(message: string): void {
-    if (!this.passthrough) return
-    console.warn(message)
-  }
-
-  protected errorPassthrough(message: string): void {
-    if (!this.passthrough) return
-    console.error(message)
+    this.batchStop = true
+    if (this.batcherPromise) {
+      await this.batcherPromise
+    }
   }
 
   private log(
-    level: LogLevel,
+    level: logLevel,
     message: string,
-    attrs: LogAttributes,
+    attrs: Attributes,
     error: Error | null = null,
   ): void {
-    const record: LogRecord = {
-      timestamp: Date.now(),
-      severityNumber: this.getSeverity(level),
-      severityText: level,
-      body: message,
-      attributes: attrs,
-    }
-
     if (error) {
-      record.attributes = { ...record.attributes, error: error.message }
+      attrs = { ...attrs, error: error.message }
     }
 
-    this.logger.emit(record)
+    attrs = { ...attrs, 'service.name': this.name }
+
+    this.logsQueue.push({
+      timestamp: getNowTimestamp(),
+      body: message,
+      level: level,
+      attributes: attrs,
+    })
   }
 
-  private getSeverity(level: LogLevel): SeverityNumber {
-    switch (level) {
-      case LogLevel.DEBUG:
-        return SeverityNumber.DEBUG
-      case LogLevel.INFO:
-        return SeverityNumber.INFO
-      case LogLevel.WARN:
-        return SeverityNumber.WARN
-      case LogLevel.ERROR:
-        return SeverityNumber.ERROR
-      default:
-        return SeverityNumber.INFO
-    }
+  private stdOutPassthrough(message: string): void {
+    if (!this.passthrough) return
+    this.originalStdoutWrite(message + '\n')
   }
 
-  private getCallerAttrs(): Attributes {
-    const error = new Error()
-    const stack = error.stack?.split('\n')[3]
-    const match = stack?.match(/at (?:(.+?)\s+\()?(?:(.+?):(\d+):(\d+))\)?/)
-
-    if (!match) return {}
-
-    return {
-      'caller.function': match[1] || '',
-      'caller.file': match[2] || '',
-      'caller.line': parseInt(match[3] || '0', 10),
-    }
+  private stdErrPassthrough(message: string): void {
+    if (!this.passthrough) return
+    this.originalStderrWrite(message + '\n')
   }
 
   private getStoredAttributes(): Attributes {
     return getAttributes()
   }
+
+  private startBatcher() {
+    this.batcherPromise = new Promise<void>((resolve) => {
+      const runBatcher = async () => {
+        while (!this.batchStop) {
+          await this.flushBatch()
+          await new Promise((r) => setTimeout(r, this.batchInterval))
+        }
+        await this.flushBatch(true)
+        resolve()
+      }
+      runBatcher()
+    })
+  }
+
+  private async flushBatch(force = false) {
+    if (this.logsQueue.length === 0) return
+
+    while (this.logsQueue.length > 0) {
+      const batch = this.logsQueue.splice(0, this.maxBatchSize)
+      await this.sendBatch(batch)
+      if (!force) break
+    }
+  }
+
+  private async sendBatch(batch: log[]) {
+    if (batch.length === 0) return
+
+    const payload: messageBatch = {
+      token: this.token,
+      type: 'logs',
+      logs: batch,
+    }
+
+    try {
+      const endpoint = formatEndpoint(this.endpoint, this.insecure)
+      await axios.post(endpoint, payload, {
+        headers: { 'Content-Type': 'application/json' },
+      })
+    } catch (err) {}
+  }
+
+  private redirectStdout() {
+    const loggerInfo = this.info.bind(this)
+    process.stdout.write = function (
+      chunk: Uint8Array | string,
+      encodingOrCallback?: BufferEncoding | ((error?: Error) => void),
+      callback?: (error?: Error) => void,
+    ): boolean {
+      let encoding: BufferEncoding | undefined
+      let cb: ((error?: Error) => void) | undefined
+
+      if (typeof encodingOrCallback === 'function') {
+        cb = encodingOrCallback
+      } else {
+        encoding = encodingOrCallback
+        cb = callback
+      }
+
+      if (typeof chunk === 'string') {
+        loggerInfo(chunk.trimEnd())
+      } else {
+        const message = Buffer.from(chunk).toString(encoding || 'utf8')
+        loggerInfo(message.trimEnd())
+      }
+
+      if (cb) {
+        cb()
+      }
+
+      return true
+    }
+  }
+
+  private redirectStderr() {
+    const loggerError = this.error.bind(this)
+    process.stderr.write = function (
+      chunk: Uint8Array | string,
+      encodingOrCallback?: BufferEncoding | ((error?: Error) => void),
+      callback?: (error?: Error) => void,
+    ): boolean {
+      let encoding: BufferEncoding | undefined
+      let cb: ((error?: Error) => void) | undefined
+
+      if (typeof encodingOrCallback === 'function') {
+        cb = encodingOrCallback
+      } else {
+        encoding = encodingOrCallback
+        cb = callback
+      }
+
+      if (typeof chunk === 'string') {
+        loggerError(chunk.trimEnd())
+      } else {
+        const message = Buffer.from(chunk).toString(encoding || 'utf8')
+        loggerError(message.trimEnd())
+      }
+
+      if (cb) {
+        cb()
+      }
+
+      return true
+    }
+  }
+}
+
+function formatEndpoint(
+  endpoint: string | undefined,
+  insecure: boolean | undefined,
+): string {
+  if (endpoint == '') {
+    return 'ingress.vigilant.run/api/message'
+  } else if (insecure) {
+    return `http://${endpoint}/api/message`
+  } else {
+    return `https://${endpoint}/api/message`
+  }
+}
+
+function getNowTimestamp(): string {
+  return new Date().toISOString().replace(/\d{3}Z$/, '000000Z')
+}
+
+enum logLevel {
+  INFO = 'INFO',
+  WARNING = 'WARNING',
+  ERROR = 'ERROR',
+  DEBUG = 'DEBUG',
+}
+
+type log = {
+  timestamp: string
+  body: string
+  level: logLevel
+  attributes: Attributes
+}
+
+type messageBatchType = 'logs'
+
+type messageBatch = {
+  token: string
+  type: messageBatchType
+  logs: log[]
 }
