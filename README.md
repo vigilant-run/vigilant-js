@@ -2,10 +2,6 @@
 
 This is the JavaScript SDK for Vigilant (https://vigilant.run).
 
-## Requirements
-
-- Node.js v16.4.0+
-
 ## Installation
 
 ```bash
@@ -46,10 +42,10 @@ const logger = new Logger({
   token: 'tk_1234567890',
 })
 
-// Enable the logger
+// Enable autocapture
 logger.autocapture_enable()
 
-// Log some messages to stdout and stderr
+// Log some messages to the console
 console.log('Hello, world!')
 console.error('Error!')
 
@@ -70,7 +66,7 @@ const logger = new Logger({
   token: 'tk_0123456789',
 })
 
-// Enable the logger
+// Enable autocapture
 logger.autocapture_enable()
 
 // Add an attribute

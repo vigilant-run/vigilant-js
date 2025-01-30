@@ -1,6 +1,7 @@
 import { getAttributes } from './storage.js'
 import { Attributes } from './attributes.js'
 import axios from 'axios'
+import { inspect } from 'util'
 
 export interface LoggerOptions {
   name?: string
@@ -11,8 +12,8 @@ export interface LoggerOptions {
 }
 
 export class Logger {
-  private originalStdoutWrite: typeof process.stdout.write
-  private originalStderrWrite: typeof process.stderr.write
+  private consoleLog: typeof console.log = console.log.bind(console)
+  private consoleError: typeof console.error = console.error.bind(console)
 
   private passthrough: boolean
   private name: string
@@ -27,9 +28,6 @@ export class Logger {
   private maxBatchSize = 100
 
   constructor(options: LoggerOptions) {
-    this.originalStdoutWrite = process.stdout.write.bind(process.stdout)
-    this.originalStderrWrite = process.stderr.write.bind(process.stderr)
-
     this.passthrough = options.passthrough ?? true
     this.name = options.name ?? 'sample-app'
     this.endpoint = options.endpoint ?? 'ingress.vigilant.run'
@@ -68,13 +66,13 @@ export class Logger {
   }
 
   autocapture_enable() {
-    this.redirectStdout()
-    this.redirectStderr()
+    this.redirectConsoleLog()
+    this.redirectConsoleError()
   }
 
   autocapture_disable() {
-    process.stdout.write = this.originalStdoutWrite
-    process.stderr.write = this.originalStderrWrite
+    console.log = this.consoleLog
+    console.error = this.consoleError
   }
 
   async shutdown(): Promise<void> {
@@ -102,16 +100,6 @@ export class Logger {
       level: level,
       attributes: attrs,
     })
-  }
-
-  private stdOutPassthrough(message: string): void {
-    if (!this.passthrough) return
-    this.originalStdoutWrite(message + '\n')
-  }
-
-  private stdErrPassthrough(message: string): void {
-    if (!this.passthrough) return
-    this.originalStderrWrite(message + '\n')
   }
 
   private getStoredAttributes(): Attributes {
@@ -159,68 +147,32 @@ export class Logger {
     } catch (err) {}
   }
 
-  private redirectStdout() {
-    const loggerInfo = this.info.bind(this)
-    process.stdout.write = function (
-      chunk: Uint8Array | string,
-      encodingOrCallback?: BufferEncoding | ((error?: Error) => void),
-      callback?: (error?: Error) => void,
-    ): boolean {
-      let encoding: BufferEncoding | undefined
-      let cb: ((error?: Error) => void) | undefined
-
-      if (typeof encodingOrCallback === 'function') {
-        cb = encodingOrCallback
-      } else {
-        encoding = encodingOrCallback
-        cb = callback
-      }
-
-      if (typeof chunk === 'string') {
-        loggerInfo(chunk.trimEnd())
-      } else {
-        const message = Buffer.from(chunk).toString(encoding || 'utf8')
-        loggerInfo(message.trimEnd())
-      }
-
-      if (cb) {
-        cb()
-      }
-
-      return true
+  private redirectConsoleLog() {
+    console.log = (...args: any[]) => {
+      const message = args.map(formatArg).join(' ')
+      const loggerAttrs = this.getStoredAttributes()
+      this.log(logLevel.INFO, message, loggerAttrs)
+      this.stdOutPassthrough(message)
     }
   }
 
-  private redirectStderr() {
-    const loggerError = this.error.bind(this)
-    process.stderr.write = function (
-      chunk: Uint8Array | string,
-      encodingOrCallback?: BufferEncoding | ((error?: Error) => void),
-      callback?: (error?: Error) => void,
-    ): boolean {
-      let encoding: BufferEncoding | undefined
-      let cb: ((error?: Error) => void) | undefined
-
-      if (typeof encodingOrCallback === 'function') {
-        cb = encodingOrCallback
-      } else {
-        encoding = encodingOrCallback
-        cb = callback
-      }
-
-      if (typeof chunk === 'string') {
-        loggerError(chunk.trimEnd())
-      } else {
-        const message = Buffer.from(chunk).toString(encoding || 'utf8')
-        loggerError(message.trimEnd())
-      }
-
-      if (cb) {
-        cb()
-      }
-
-      return true
+  private redirectConsoleError() {
+    console.error = (...args: any[]) => {
+      const message = args.map(formatArg).join(' ')
+      const loggerAttrs = this.getStoredAttributes()
+      this.log(logLevel.ERROR, message, loggerAttrs)
+      this.stdErrPassthrough(message)
     }
+  }
+
+  private stdOutPassthrough(message: string): void {
+    if (!this.passthrough) return
+    this.consoleLog(message)
+  }
+
+  private stdErrPassthrough(message: string): void {
+    if (!this.passthrough) return
+    this.consoleError(message)
   }
 }
 
@@ -238,7 +190,7 @@ function formatEndpoint(
 }
 
 function getNowTimestamp(): string {
-  return new Date().toISOString().replace(/\d{3}Z$/, '000000Z')
+  return new Date().toISOString().replace(/\.(\d{3})Z$/, '.$1000Z')
 }
 
 enum logLevel {
@@ -261,4 +213,18 @@ type messageBatch = {
   token: string
   type: messageBatchType
   logs: log[]
+}
+
+function formatArg(arg: any): string {
+  if (arg instanceof Error) {
+    return arg.stack || arg.message
+  }
+  if (typeof arg === 'object') {
+    try {
+      return JSON.stringify(arg)
+    } catch {
+      return inspect(arg, { depth: Infinity, colors: false })
+    }
+  }
+  return String(arg)
 }
