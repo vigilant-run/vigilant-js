@@ -9,6 +9,6 @@ esbuild
     platform: 'node',
     format: 'cjs',
     sourcemap: true,
-    external: [],
+    external: ['async_hooks'],
   })
   .catch(() => process.exit(1))
