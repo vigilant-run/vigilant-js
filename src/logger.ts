@@ -12,8 +12,8 @@ export interface LoggerOptions {
 }
 
 export class Logger {
-  private consoleLog: typeof console.log = console.log.bind(console)
-  private consoleError: typeof console.error = console.error.bind(console)
+  private originalStdoutWrite: typeof process.stdout.write
+  private originalStderrWrite: typeof process.stderr.write
 
   private passthrough: boolean
   private name: string
@@ -28,6 +28,9 @@ export class Logger {
   private maxBatchSize = 100
 
   constructor(options: LoggerOptions) {
+    this.originalStdoutWrite = process.stdout.write.bind(process.stdout)
+    this.originalStderrWrite = process.stderr.write.bind(process.stderr)
+
     this.passthrough = options.passthrough ?? true
     this.name = options.name ?? 'sample-app'
     this.endpoint = options.endpoint ?? 'ingress.vigilant.run'
@@ -66,13 +69,13 @@ export class Logger {
   }
 
   autocapture_enable() {
-    this.redirectConsoleLog()
-    this.redirectConsoleError()
+    this.redirectStdout()
+    this.redirectStderr()
   }
 
   autocapture_disable() {
-    console.log = this.consoleLog
-    console.error = this.consoleError
+    process.stdout.write = this.originalStdoutWrite
+    process.stderr.write = this.originalStderrWrite
   }
 
   async shutdown(): Promise<void> {
@@ -147,32 +150,78 @@ export class Logger {
     } catch (err) {}
   }
 
-  private redirectConsoleLog() {
-    console.log = (...args: any[]) => {
-      const message = args.map(formatArg).join(' ')
-      const loggerAttrs = this.getStoredAttributes()
-      this.log(logLevel.INFO, message, loggerAttrs)
-      this.stdOutPassthrough(message)
+  private redirectStdout() {
+    const loggerInfo = this.info.bind(this)
+    process.stdout.write = function (
+      chunk: Uint8Array | string,
+      encodingOrCallback?: BufferEncoding | ((error?: Error) => void),
+      callback?: (error?: Error) => void,
+    ): boolean {
+      let encoding: BufferEncoding | undefined
+      let cb: ((error?: Error) => void) | undefined
+
+      if (typeof encodingOrCallback === 'function') {
+        cb = encodingOrCallback
+      } else {
+        encoding = encodingOrCallback
+        cb = callback
+      }
+
+      if (typeof chunk === 'string') {
+        loggerInfo(chunk.trimEnd())
+      } else {
+        const message = Buffer.from(chunk).toString(encoding || 'utf8')
+        loggerInfo(message.trimEnd())
+      }
+
+      if (cb) {
+        cb()
+      }
+
+      return true
     }
   }
 
-  private redirectConsoleError() {
-    console.error = (...args: any[]) => {
-      const message = args.map(formatArg).join(' ')
-      const loggerAttrs = this.getStoredAttributes()
-      this.log(logLevel.ERROR, message, loggerAttrs)
-      this.stdErrPassthrough(message)
+  private redirectStderr() {
+    const loggerError = this.error.bind(this)
+    process.stderr.write = function (
+      chunk: Uint8Array | string,
+      encodingOrCallback?: BufferEncoding | ((error?: Error) => void),
+      callback?: (error?: Error) => void,
+    ): boolean {
+      let encoding: BufferEncoding | undefined
+      let cb: ((error?: Error) => void) | undefined
+
+      if (typeof encodingOrCallback === 'function') {
+        cb = encodingOrCallback
+      } else {
+        encoding = encodingOrCallback
+        cb = callback
+      }
+
+      if (typeof chunk === 'string') {
+        loggerError(chunk.trimEnd())
+      } else {
+        const message = Buffer.from(chunk).toString(encoding || 'utf8')
+        loggerError(message.trimEnd())
+      }
+
+      if (cb) {
+        cb()
+      }
+
+      return true
     }
   }
 
   private stdOutPassthrough(message: string): void {
     if (!this.passthrough) return
-    this.consoleLog(message)
+    this.originalStdoutWrite(message + '\n')
   }
 
   private stdErrPassthrough(message: string): void {
     if (!this.passthrough) return
-    this.consoleError(message)
+    this.originalStderrWrite(message + '\n')
   }
 }
 
