@@ -1,4 +1,3 @@
-import { getAttributes } from './storage'
 import { Attributes } from './attributes'
 import axios from 'axios'
 
@@ -11,8 +10,12 @@ export interface LoggerOptions {
 }
 
 export class Logger {
-  private originalStdoutWrite: typeof process.stdout.write
-  private originalStderrWrite: typeof process.stderr.write
+  private consoleLog: typeof console.log = console.log.bind(console)
+  private consoleInfo: typeof console.info = console.info.bind(console)
+  private consoleWarn: typeof console.warn = console.warn.bind(console)
+  private consoleError: typeof console.error = console.error.bind(console)
+  private consoleDebug: typeof console.debug = console.debug.bind(console)
+  private consoleTrace: typeof console.trace = console.trace.bind(console)
 
   private passthrough: boolean
   private name: string
@@ -27,9 +30,6 @@ export class Logger {
   private maxBatchSize = 100
 
   constructor(options: LoggerOptions) {
-    this.originalStdoutWrite = process.stdout.write.bind(process.stdout)
-    this.originalStderrWrite = process.stderr.write.bind(process.stderr)
-
     this.passthrough = options.passthrough ?? true
     this.name = options.name ?? 'sample-app'
     this.endpoint = options.endpoint ?? 'ingress.vigilant.run'
@@ -40,21 +40,18 @@ export class Logger {
   }
 
   debug(message: string, attrs: Attributes = {}): void {
-    const loggerAttrs = this.getStoredAttributes()
-    this.log(logLevel.DEBUG, message, { ...loggerAttrs, ...attrs })
-    this.stdOutPassthrough(message)
+    this.log(logLevel.DEBUG, message, attrs)
+    this.consoleLogPassthrough(message)
   }
 
   info(message: string, attrs: Attributes = {}): void {
-    const loggerAttrs = this.getStoredAttributes()
-    this.log(logLevel.INFO, message, { ...loggerAttrs, ...attrs })
-    this.stdOutPassthrough(message)
+    this.log(logLevel.INFO, message, attrs)
+    this.consoleLogPassthrough(message)
   }
 
   warn(message: string, attrs: Attributes = {}): void {
-    const loggerAttrs = this.getStoredAttributes()
-    this.log(logLevel.WARNING, message, { ...loggerAttrs, ...attrs })
-    this.stdOutPassthrough(message)
+    this.log(logLevel.WARNING, message, attrs)
+    this.consoleLogPassthrough(message)
   }
 
   error(
@@ -62,19 +59,26 @@ export class Logger {
     error: Error | null = null,
     attrs: Attributes = {},
   ): void {
-    const loggerAttrs = this.getStoredAttributes()
-    this.log(logLevel.ERROR, message, { ...loggerAttrs, ...attrs }, error)
+    this.log(logLevel.ERROR, message, attrs, error)
     this.stdErrPassthrough(message)
   }
 
   autocapture_enable() {
-    this.redirectStdout()
-    this.redirectStderr()
+    this.redirectConsoleLog()
+    this.redirectConsoleInfo()
+    this.redirectConsoleWarn()
+    this.redirectConsoleError()
+    this.redirectConsoleDebug()
+    this.redirectConsoleTrace()
   }
 
   autocapture_disable() {
-    process.stdout.write = this.originalStdoutWrite
-    process.stderr.write = this.originalStderrWrite
+    console.log = this.consoleLog
+    console.info = this.consoleInfo
+    console.warn = this.consoleWarn
+    console.error = this.consoleError
+    console.debug = this.consoleDebug
+    console.trace = this.consoleTrace
   }
 
   async shutdown(): Promise<void> {
@@ -102,10 +106,6 @@ export class Logger {
       level: level,
       attributes: attrs,
     })
-  }
-
-  private getStoredAttributes(): Attributes {
-    return getAttributes()
   }
 
   private startBatcher() {
@@ -149,78 +149,82 @@ export class Logger {
     } catch (err) {}
   }
 
-  private redirectStdout() {
-    const loggerInfo = this.info.bind(this)
-    process.stdout.write = function (
-      chunk: Uint8Array | string,
-      encodingOrCallback?: BufferEncoding | ((error?: Error) => void),
-      callback?: (error?: Error) => void,
-    ): boolean {
-      let encoding: BufferEncoding | undefined
-      let cb: ((error?: Error) => void) | undefined
-
-      if (typeof encodingOrCallback === 'function') {
-        cb = encodingOrCallback
-      } else {
-        encoding = encodingOrCallback
-        cb = callback
-      }
-
-      if (typeof chunk === 'string') {
-        loggerInfo(chunk.trimEnd())
-      } else {
-        const message = Buffer.from(chunk).toString(encoding || 'utf8')
-        loggerInfo(message.trimEnd())
-      }
-
-      if (cb) {
-        cb()
-      }
-
-      return true
+  private redirectConsoleLog() {
+    console.log = (...args: any[]) => {
+      const message = args.map(formatArg).join(' ')
+      this.log(logLevel.INFO, message, {})
+      this.consoleLogPassthrough(message)
     }
   }
 
-  private redirectStderr() {
-    const loggerError = this.error.bind(this)
-    process.stderr.write = function (
-      chunk: Uint8Array | string,
-      encodingOrCallback?: BufferEncoding | ((error?: Error) => void),
-      callback?: (error?: Error) => void,
-    ): boolean {
-      let encoding: BufferEncoding | undefined
-      let cb: ((error?: Error) => void) | undefined
-
-      if (typeof encodingOrCallback === 'function') {
-        cb = encodingOrCallback
-      } else {
-        encoding = encodingOrCallback
-        cb = callback
-      }
-
-      if (typeof chunk === 'string') {
-        loggerError(chunk.trimEnd())
-      } else {
-        const message = Buffer.from(chunk).toString(encoding || 'utf8')
-        loggerError(message.trimEnd())
-      }
-
-      if (cb) {
-        cb()
-      }
-
-      return true
+  private redirectConsoleInfo() {
+    console.info = (...args: any[]) => {
+      const message = args.map(formatArg).join(' ')
+      this.log(logLevel.INFO, message, {})
+      this.consoleInfoPassthrough(message)
     }
   }
 
-  private stdOutPassthrough(message: string): void {
+  private redirectConsoleWarn() {
+    console.warn = (...args: any[]) => {
+      const message = args.map(formatArg).join(' ')
+      this.log(logLevel.WARNING, message, {})
+      this.consoleWarnPassthrough(message)
+    }
+  }
+
+  private redirectConsoleError() {
+    console.error = (...args: any[]) => {
+      const message = args.map(formatArg).join(' ')
+      this.log(logLevel.ERROR, message, {})
+      this.stdErrPassthrough(message)
+    }
+  }
+
+  private redirectConsoleDebug() {
+    console.debug = (...args: any[]) => {
+      const message = args.map(formatArg).join(' ')
+      this.log(logLevel.DEBUG, message, {})
+      this.consoleDebugPassthrough(message)
+    }
+  }
+
+  private redirectConsoleTrace() {
+    console.trace = (...args: any[]) => {
+      const message = args.map(formatArg).join(' ')
+      this.log(logLevel.DEBUG, message, {})
+      this.consoleTracePassthrough(message)
+    }
+  }
+
+  private consoleLogPassthrough(message: string): void {
     if (!this.passthrough) return
-    this.originalStdoutWrite(message + '\n')
+    this.consoleLog(message)
+  }
+
+  private consoleInfoPassthrough(message: string): void {
+    if (!this.passthrough) return
+    this.consoleInfo(message)
+  }
+
+  private consoleWarnPassthrough(message: string): void {
+    if (!this.passthrough) return
+    this.consoleWarn(message)
   }
 
   private stdErrPassthrough(message: string): void {
     if (!this.passthrough) return
-    this.originalStderrWrite(message + '\n')
+    this.consoleError(message)
+  }
+
+  private consoleDebugPassthrough(message: string): void {
+    if (!this.passthrough) return
+    this.consoleDebug(message)
+  }
+
+  private consoleTracePassthrough(message: string): void {
+    if (!this.passthrough) return
+    this.consoleTrace(message)
   }
 }
 
@@ -261,4 +265,18 @@ type messageBatch = {
   token: string
   type: messageBatchType
   logs: log[]
+}
+
+function formatArg(arg: any): string {
+  if (arg instanceof Error) {
+    return arg.stack || arg.message
+  }
+  if (typeof arg === 'object') {
+    try {
+      return JSON.stringify(arg)
+    } catch {
+      return Object.prototype.toString.call(arg)
+    }
+  }
+  return String(arg)
 }

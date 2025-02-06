@@ -1,3 +1,3 @@
-export { Attributes } from './attributes.js'
-export { Logger, LoggerOptions } from './logger.js'
-export { addAttributes, clearAttributes, removeAttributes } from './storage.js'
+export { Attributes } from './attributes'
+export { Logger, LoggerOptions } from './logger'
+export { addAttributes, clearAttributes, removeAttributes } from './storage'
