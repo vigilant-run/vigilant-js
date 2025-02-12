@@ -1,5 +1,5 @@
-import { getAttributes } from './storage'
 import { Attributes } from './attributes'
+import { getAttributes } from './storage'
 import axios from 'axios'
 
 export interface LoggerOptions {
@@ -90,22 +90,17 @@ export class Logger {
     attrs: Attributes,
     error: Error | null = null,
   ): void {
-    if (error) {
-      attrs = { ...attrs, error: error.message }
-    }
-
-    attrs = { ...attrs, 'service.name': this.name }
-
     this.logsQueue.push({
       timestamp: getNowTimestamp(),
       body: message,
       level: level,
-      attributes: attrs,
+      attributes: {
+        ...this.getStoredAttributes(),
+        ...attrs,
+        ...(error ? { error: error.message } : {}),
+        'service.name': this.name,
+      },
     })
-  }
-
-  private getStoredAttributes(): Attributes {
-    return getAttributes()
   }
 
   private startBatcher() {
@@ -221,6 +216,10 @@ export class Logger {
   private stdErrPassthrough(message: string): void {
     if (!this.passthrough) return
     this.originalStderrWrite(message + '\n')
+  }
+
+  private getStoredAttributes(): Attributes {
+    return getAttributes()
   }
 }
 
