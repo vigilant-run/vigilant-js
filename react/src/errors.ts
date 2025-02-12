@@ -15,9 +15,9 @@ export function initErrorHandler(options: ErrorHandlerOptions) {
   globalErrorHandler = new ErrorHandler(options)
 }
 
-export function shutdownErrorHandler() {
+export async function shutdownErrorHandler() {
   if (!globalErrorHandler) return
-  globalErrorHandler.shutdown()
+  await globalErrorHandler.shutdown()
 }
 
 export function captureError(error: Error, attrs: Attributes = {}) {
