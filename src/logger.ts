@@ -1,6 +1,7 @@
 import { Attributes } from './attributes'
 import { getAttributes } from './storage'
 import axios from 'axios'
+import util from 'util'
 
 export interface LoggerOptions {
   name?: string
@@ -11,8 +12,12 @@ export interface LoggerOptions {
 }
 
 export class Logger {
-  private originalStdoutWrite: typeof process.stdout.write
-  private originalStderrWrite: typeof process.stderr.write
+  private consoleLog: typeof console.log | null = null
+  private consoleError: typeof console.error | null = null
+  private proccessStdoutWrite: typeof process.stdout.write | null = null
+  private proccessStderrWrite: typeof process.stderr.write | null = null
+  private bunStdoutWrite: typeof Bun.stdout.write | null = null
+  private bunStderrWrite: typeof Bun.stderr.write | null = null
 
   private passthrough: boolean
   private name: string
@@ -27,14 +32,17 @@ export class Logger {
   private maxBatchSize = 100
 
   constructor(options: LoggerOptions) {
-    this.originalStdoutWrite = process.stdout.write.bind(process.stdout)
-    this.originalStderrWrite = process.stderr.write.bind(process.stderr)
-
     this.passthrough = options.passthrough ?? true
     this.name = options.name ?? 'sample-app'
     this.endpoint = options.endpoint ?? 'ingress.vigilant.run'
     this.token = options.token ?? 'tk_1234567890'
     this.insecure = options.insecure ?? false
+
+    if (this.isBun()) this.initBun()
+    this.consoleLog = console.log.bind(console.log)
+    this.consoleError = console.error.bind(console.error)
+    this.proccessStdoutWrite = process.stdout.write.bind(process.stdout)
+    this.proccessStderrWrite = process.stderr.write.bind(process.stderr)
 
     this.startBatcher()
   }
@@ -68,13 +76,21 @@ export class Logger {
   }
 
   autocapture_enable() {
-    this.redirectStdout()
-    this.redirectStderr()
+    if (this.isBun()) this.enableBunAutocapture()
+    this.redirectConsoleLog()
+    this.redirectConsoleError()
+    this.redirectProcessStdout()
+    this.redirectProcessStderr()
   }
 
   autocapture_disable() {
-    process.stdout.write = this.originalStdoutWrite
-    process.stderr.write = this.originalStderrWrite
+    if (this.isBun()) this.disableBunAutocapture()
+    if (this.consoleLog) console.log = this.consoleLog
+    if (this.consoleError) console.error = this.consoleError
+    if (this.proccessStdoutWrite)
+      process.stdout.write = this.proccessStdoutWrite
+    if (this.proccessStderrWrite)
+      process.stderr.write = this.proccessStderrWrite
   }
 
   async shutdown(): Promise<void> {
@@ -144,7 +160,31 @@ export class Logger {
     } catch (err) {}
   }
 
-  private redirectStdout() {
+  private redirectConsoleLog() {
+    const loggerInfo = this.info.bind(this)
+    console.log = (...args: any[]) => {
+      if (args.length === 0) {
+        loggerInfo('')
+        return
+      }
+      const message = util.format(...args)
+      loggerInfo(message)
+    }
+  }
+
+  private redirectConsoleError() {
+    const loggerError = this.error.bind(this)
+    console.error = (...args: any[]) => {
+      if (args.length === 0) {
+        loggerError('')
+        return
+      }
+      const message = util.format(...args)
+      loggerError(message)
+    }
+  }
+
+  private redirectProcessStdout() {
     const loggerInfo = this.info.bind(this)
     process.stdout.write = function (
       chunk: Uint8Array | string,
@@ -176,7 +216,7 @@ export class Logger {
     }
   }
 
-  private redirectStderr() {
+  private redirectProcessStderr() {
     const loggerError = this.error.bind(this)
     process.stderr.write = function (
       chunk: Uint8Array | string,
@@ -208,14 +248,57 @@ export class Logger {
     }
   }
 
+  private isBun() {
+    return typeof Bun !== 'undefined'
+  }
+
+  private initBun() {
+    this.bunStdoutWrite = Bun.stdout.write.bind(Bun.stdout)
+    this.bunStderrWrite = Bun.stderr.write.bind(Bun.stderr)
+  }
+
+  private enableBunAutocapture() {
+    this.redirectBunStdout()
+    this.redirectBunStderr()
+  }
+
+  private disableBunAutocapture() {
+    if (this.bunStdoutWrite) Bun.stdout.write = this.bunStdoutWrite
+    if (this.bunStderrWrite) Bun.stderr.write = this.bunStderrWrite
+  }
+
+  private redirectBunStdout() {
+    const loggerInfo = this.info.bind(this)
+    Bun.stdout.write = function (chunk: string): Promise<number> {
+      loggerInfo(chunk.trimEnd())
+      return Promise.resolve(chunk.length)
+    }
+  }
+
+  private redirectBunStderr() {
+    const loggerError = this.error.bind(this)
+    Bun.stderr.write = function (chunk: string): Promise<number> {
+      loggerError(chunk.trimEnd())
+      return Promise.resolve(chunk.length)
+    }
+  }
+
   private stdOutPassthrough(message: string): void {
     if (!this.passthrough) return
-    this.originalStdoutWrite(message + '\n')
+    if (this.proccessStdoutWrite) {
+      this.proccessStdoutWrite(message + '\n')
+    } else if (this.bunStdoutWrite) {
+      this.bunStdoutWrite(message + '\n')
+    }
   }
 
   private stdErrPassthrough(message: string): void {
     if (!this.passthrough) return
-    this.originalStderrWrite(message + '\n')
+    if (this.proccessStderrWrite) {
+      this.proccessStderrWrite(message + '\n')
+    } else if (this.bunStderrWrite) {
+      this.bunStderrWrite(message + '\n')
+    }
   }
 
   private getStoredAttributes(): Attributes {
