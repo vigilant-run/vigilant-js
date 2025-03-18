@@ -64,12 +64,18 @@ class ErrorHandler {
   }
 
   private capture(error: Error, attrs: Attributes = {}): void {
-    this.errorsQueue.push({
+    const capturedError: CapturedError = {
       timestamp: getNowTimestamp(),
       details: getErrorDetails(error),
       location: getErrorLocation(error),
       attributes: attrs,
-    })
+    }
+
+    if (shouldIgnoreError(capturedError)) {
+      return
+    }
+
+    this.errorsQueue.push(capturedError)
   }
 
   private startBatcher() {
@@ -134,6 +140,14 @@ function getErrorDetails(error: Error): ErrorDetails {
     message: error.message,
     stacktrace: error.stack ?? '',
   }
+}
+
+function shouldIgnoreError(capturedError: CapturedError): boolean {
+  return (
+    !capturedError.details.message ||
+    !capturedError.location.file ||
+    !capturedError.location.function
+  )
 }
 
 function getErrorLocation(error: Error): ErrorLocation {

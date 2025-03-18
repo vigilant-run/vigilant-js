@@ -68,12 +68,18 @@ class MetricsHandler {
   }
 
   private capture(name: string, value: number, attrs: Attributes = {}): void {
-    this.metricsQueue.push({
+    const capturedMetric: CapturedMetric = {
       timestamp: getNowTimestamp(),
       name: name,
       value: value,
       attributes: attrs,
-    })
+    }
+
+    if (shouldIgnoreMetric(capturedMetric)) {
+      return
+    }
+
+    this.metricsQueue.push(capturedMetric)
   }
 
   private startBatcher() {
@@ -130,6 +136,10 @@ function formatEndpoint(endpoint: string, insecure: boolean): string {
 
 function getNowTimestamp(): string {
   return new Date().toISOString().replace(/\.(\d{3})Z$/, '.$1000Z')
+}
+
+function shouldIgnoreMetric(capturedMetric: CapturedMetric): boolean {
+  return capturedMetric.name === ''
 }
 
 type CapturedMetric = {
