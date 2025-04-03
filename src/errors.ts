@@ -1,223 +1,94 @@
-import { Attributes } from './attributes'
-import { getAttributes } from './storage'
-import axios from 'axios'
+export const ConfigNotValidError = new Error(
+  `\n\n[ **** Vigilant Error **** ]\n
+The configuration is invalid.
+The configuration must be a valid AgentConfig.
+Use the 'AgentConfigBuilder' to create a valid configuration.
+Generate a token by visiting: https://dashboard.vigilant.run/settings/project/api
 
-var globalErrorHandler: ErrorHandler | null = null
+Example Usage:
 
-export interface ErrorHandlerOptions {
-  name?: string
-  token?: string
-  endpoint?: string
-  insecure?: boolean
-  noop?: boolean
-}
+import { init, AgentConfigBuilder } from 'vigilant-js'
 
-export function initErrorHandler(options: ErrorHandlerOptions) {
-  globalErrorHandler = new ErrorHandler(options)
-}
+const config = new AgentConfigBuilder()
+  .withName('My Application')
+  .withToken('your-token-here')
+  .build()
 
-export async function shutdownErrorHandler() {
-  if (!globalErrorHandler) return
-  await globalErrorHandler.shutdown()
-}
+init(config)\n\n`,
+)
 
-export function captureError(error: Error, attrs: Attributes = {}) {
-  if (!globalErrorHandler) return
-  globalErrorHandler.captureError(error, attrs)
-}
+export const ConfigTokenRequiredError = new Error(
+  `\n\n[ **** Vigilant Error **** ]\n
+You cannot have an empty token when creating the Vigilant Agent.
+Use the 'withToken()' method on the builder to set a token.
+Generate one by visiting: https://dashboard.vigilant.run/settings/project/api
 
-class ErrorHandler {
-  private name: string
-  private endpoint: string
-  private token: string
-  private insecure: boolean
-  private noop: boolean
+Example Usage:
 
-  private errorsQueue: CapturedError[] = []
-  private batchStop = false
-  private batcherPromise: Promise<void> | null = null
-  private batchInterval = 100
-  private maxBatchSize = 100
+import { init, AgentConfigBuilder } from 'vigilant-js'
 
-  constructor(options: ErrorHandlerOptions) {
-    this.name = options.name ?? 'sample-app'
-    this.token = options.token ?? 'tk_1234567890'
-    this.endpoint = options.endpoint ?? 'ingress.vigilant.run'
-    this.insecure = options.insecure ?? false
-    this.noop = options.noop ?? false
+const config = new AgentConfigBuilder()
+  .withName('My Application')
+  .withToken('your-token-here')
+  .build()
 
-    this.startBatcher()
-  }
+init(config)\n\n`,
+)
 
-  captureError(error: Error, attrs: Attributes = {}): void {
-    if (this.noop) return
-    this.capture(error, {
-      ...this.getStoredAttributes(),
-      ...attrs,
-      'service.name': this.name,
-    })
-  }
+export const ConfigNameRequiredError = new Error(
+  `\n\n[ **** Vigilant Error **** ]\n
+You cannot use an empty name when creating the Vigilant Agent.
+Use the 'withName()' method on the builder to set a name.
+Use the name of your application or service, e.g. 'backend', 'api', etc.\n\n
 
-  async shutdown(): Promise<void> {
-    this.batchStop = true
-    if (this.batcherPromise) {
-      await this.batcherPromise
-    }
-  }
+Example Usage:
 
-  private capture(error: Error, attrs: Attributes = {}): void {
-    const capturedError: CapturedError = {
-      timestamp: getNowTimestamp(),
-      details: getErrorDetails(error),
-      location: getErrorLocation(error),
-      attributes: attrs,
-    }
+import { init, AgentConfigBuilder } from 'vigilant-js'
 
-    if (shouldIgnoreError(capturedError)) {
-      return
-    }
+const config = new AgentConfigBuilder()
+  .withName('backend')
+  .withToken('your-token-here')
+  .build()
 
-    this.errorsQueue.push(capturedError)
-  }
+init(config)\n\n`,
+)
 
-  private startBatcher() {
-    this.batcherPromise = new Promise<void>((resolve) => {
-      const runBatcher = async () => {
-        while (!this.batchStop) {
-          await this.flushBatch()
-          await new Promise((r) => setTimeout(r, this.batchInterval))
-        }
-        await this.flushBatch(true)
-        resolve()
-      }
-      runBatcher()
-    })
-  }
+export const AgentNotInitializedError = new Error(
+  `\n\n[ **** Vigilant Error **** ]\n
+The Vigilant Agent has not been initialized.
+Use the 'init()' function to initialize the agent.
 
-  private async flushBatch(force = false) {
-    if (this.errorsQueue.length === 0) return
+Example Usage:
 
-    while (this.errorsQueue.length > 0) {
-      const batch = this.errorsQueue.splice(0, this.maxBatchSize)
-      await this.sendBatch(batch)
-      if (!force) break
-    }
-  }
+const config = new AgentConfigBuilder()
+  .withName('backend')
+  .withToken('your-token-here')
+  .build()
 
-  private async sendBatch(batch: CapturedError[]) {
-    if (batch.length === 0 || this.noop) return
+init(config)\n\n`,
+)
 
-    const payload: MessageBatch = {
-      token: this.token,
-      type: 'errors',
-      errors: batch,
-    }
+export const InvalidAttributesError = new Error(
+  `\n\n[ **** Vigilant Error **** ]\n
+The attributes are invalid.
+Attributes must be a non-null object.
+The keys and values must be strings.
 
-    try {
-      const endpoint = formatEndpoint(this.endpoint, this.insecure)
-      await axios.post(endpoint, payload, {
-        headers: { 'Content-Type': 'application/json' },
-      })
-    } catch (err) {}
-  }
+Example Usage:
 
-  private getStoredAttributes(): Attributes {
-    return getAttributes()
-  }
-}
+import { logInfo } from 'vigilant-js'
 
-function formatEndpoint(endpoint: string, insecure: boolean): string {
-  if (endpoint === '') {
-    return 'ingress.vigilant.run/api/message'
-  } else if (insecure) {
-    return `http://${endpoint}/api/message`
-  } else {
-    return `https://${endpoint}/api/message`
-  }
-}
+logInfo('Hello, world!', { user: 'A Name', id: 'An ID' })\n\n`,
+)
 
-function getNowTimestamp(): string {
-  return new Date().toISOString().replace(/\.(\d{3})Z$/, '.$1000Z')
-}
+export const InvalidMessageError = new Error(
+  `\n\n[ **** Vigilant Error **** ]\n
+The message is invalid.
+The message must be a string.
 
-function getErrorDetails(error: Error): ErrorDetails {
-  return {
-    type: error.name,
-    message: error.message,
-    stacktrace: error.stack ?? '',
-  }
-}
+Example Usage:
 
-function shouldIgnoreError(capturedError: CapturedError): boolean {
-  return (
-    !capturedError.details.message ||
-    !capturedError.location.file ||
-    !capturedError.location.function
-  )
-}
+import { logInfo } from 'vigilant-js'
 
-function getErrorLocation(error: Error): ErrorLocation {
-  const stack = error.stack ?? ''
-  const lines = stack.split('\n')
-
-  const locationLine = lines
-    .slice(1)
-    .find((line) => line.trim().startsWith('at'))
-  if (!locationLine) {
-    return { function: 'anonymous', file: '', line: 0 }
-  }
-
-  const trimmed = locationLine.trim()
-  const funcRegex = /^at (.+?) \((.*?):(\d+):(\d+)\)$/
-  const matchFunc = trimmed.match(funcRegex)
-  if (matchFunc) {
-    return {
-      function: matchFunc[1] || 'anonymous',
-      file: matchFunc[2] || '',
-      line: parseInt(matchFunc[3]) || 0,
-    }
-  }
-
-  const fileRegex = /^at (.*?):(\d+):(\d+)$/
-  const matchFile = trimmed.match(fileRegex)
-  if (matchFile) {
-    return {
-      function: 'anonymous',
-      file: matchFile[1] || '',
-      line: parseInt(matchFile[2]) || 0,
-    }
-  }
-
-  return {
-    function: 'anonymous',
-    file: trimmed.replace(/^at\s+/, ''),
-    line: 0,
-  }
-}
-
-type ErrorDetails = {
-  type: string
-  message: string
-  stacktrace: string
-}
-
-type ErrorLocation = {
-  function: string
-  file: string
-  line: number
-}
-
-type CapturedError = {
-  timestamp: string
-  details: ErrorDetails
-  location: ErrorLocation
-  attributes: Attributes
-}
-
-type MessageBatchType = 'errors'
-
-type MessageBatch = {
-  token: string
-  type: MessageBatchType
-  errors: CapturedError[]
-}
+logInfo('Hello, world!')\n\n`,
+)

@@ -1,32 +1,20 @@
 {
   "name": "vigilant-js",
   "author": "Vigilant",
-  "version": "2.0.11",
+  "version": "3.0.0",
   "description": "SDK for Vigilant",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",
-  "typesVersions": {
-    "*": {
-      "react": [
-        "react/dist/types/index.d.ts"
-      ]
-    }
-  },
+  "typesVersions": {},
   "files": [
-    "dist/*",
-    "react/dist/*"
+    "dist/*"
   ],
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
-    },
-    "./react": {
-      "types": "./react/dist/types/index.d.ts",
-      "import": "./react/dist/esm/index.js",
-      "require": "./react/dist/cjs/index.js"
     }
   },
   "publishConfig": {
@@ -37,12 +25,9 @@
     "sdk"
   ],
   "scripts": {
-    "build": "npm run build:esm && npm run build:cjs && npm run build:react",
+    "build": "npm run build:esm && npm run build:cjs",
     "build:esm": "tsc --project tsconfig.esm.json",
     "build:cjs": "node build.js",
-    "build:react": "npm run build:react:esm && npm run build:react:cjs",
-    "build:react:esm": "cd react && tsc --project tsconfig.esm.json",
-    "build:react:cjs": "cd react && node build.js",
     "format": "prettier --write ."
   },
   "devDependencies": {
