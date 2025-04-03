@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { BatcherInvalidTokenError, BatchInternalServerError } from './errors'
 
 // Batcher is a class used to batch and event batches to Vigilant.
 export class Batcher<T> {
@@ -79,7 +80,7 @@ export class Batcher<T> {
   }
 
   // Sends a batch of events to Vigilant.
-  private sendBatch(messages: T[]): Promise<void> {
+  private async sendBatch(messages: T[]): Promise<void> {
     const payload = {
       token: this.token,
       type: this.type,
@@ -88,7 +89,18 @@ export class Batcher<T> {
 
     const headers = { 'Content-Type': 'application/json' }
 
-    return axios.post(this.endpoint, payload, { headers })
+    return axios
+      .post(this.endpoint, payload, { headers })
+      .catch((error) => {
+        if (!error.response) throw BatchInternalServerError
+        switch (error.response.status) {
+          case 401:
+            throw BatcherInvalidTokenError
+          default:
+            throw BatchInternalServerError
+        }
+      })
+      .then(() => {})
   }
 }
 

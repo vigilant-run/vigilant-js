@@ -5,7 +5,13 @@ import {
   InvalidMessageError,
 } from './errors'
 
-export type LogLevel = 'info' | 'debug' | 'warn' | 'error' | 'trace'
+export enum LogLevel {
+  error = 'ERROR',
+  warn = 'WARN',
+  info = 'INFO',
+  debug = 'DEBUG',
+  trace = 'TRACE',
+}
 
 export type Log = {
   timestamp: string
@@ -33,7 +39,7 @@ export function passthroughLog(log: Log, writer: (message: string) => void) {
 export function logInfo(message: string, attributes?: Record<string, string>) {
   if (!globalAgent) throw AgentNotInitializedError
 
-  const log = createLog('info', message, attributes)
+  const log = createLog(LogLevel.info, message, attributes)
 
   globalAgent.sendLog(log)
 }
@@ -49,7 +55,7 @@ export function logInfo(message: string, attributes?: Record<string, string>) {
 export function logDebug(message: string, attributes?: Record<string, string>) {
   if (!globalAgent) throw AgentNotInitializedError
 
-  const log = createLog('debug', message, attributes)
+  const log = createLog(LogLevel.debug, message, attributes)
 
   globalAgent.sendLog(log)
 }
@@ -65,7 +71,7 @@ export function logDebug(message: string, attributes?: Record<string, string>) {
 export function logWarn(message: string, attributes?: Record<string, string>) {
   if (!globalAgent) throw AgentNotInitializedError
 
-  const log = createLog('warn', message, attributes)
+  const log = createLog(LogLevel.warn, message, attributes)
 
   globalAgent.sendLog(log)
 }
@@ -81,7 +87,7 @@ export function logWarn(message: string, attributes?: Record<string, string>) {
 export function logError(message: string, attributes?: Record<string, string>) {
   if (!globalAgent) throw AgentNotInitializedError
 
-  const log = createLog('error', message, attributes)
+  const log = createLog(LogLevel.error, message, attributes)
 
   globalAgent.sendLog(log)
 }
@@ -97,7 +103,7 @@ export function logError(message: string, attributes?: Record<string, string>) {
 export function logTrace(message: string, attributes?: Record<string, string>) {
   if (!globalAgent) throw AgentNotInitializedError
 
-  const log = createLog('trace', message, attributes)
+  const log = createLog(LogLevel.trace, message, attributes)
 
   globalAgent.sendLog(log)
 }
@@ -124,7 +130,7 @@ function gateMessage(message: string): void {
 }
 
 function gateAttributes(attributes?: Record<string, string>): void {
-  if (!attributes === undefined) return
+  if (attributes === undefined) return
 
   if (typeof attributes !== 'object' || attributes === null) {
     throw InvalidAttributesError

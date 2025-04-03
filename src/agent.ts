@@ -8,6 +8,7 @@ export var globalAgent: Agent | null = null
 export function init(config: AgentConfig) {
   gateConfig(config)
   globalAgent = new Agent(config)
+  globalAgent.start()
 }
 
 export async function shutdown() {
