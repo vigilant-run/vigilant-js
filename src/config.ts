@@ -25,8 +25,8 @@ export class AgentConfigBuilder {
       token: '',
       endpoint: 'ingress.vigilant.run',
       insecure: false,
-      passthrough: false,
-      autocapture: false,
+      passthrough: true,
+      autocapture: true,
       noop: false,
     }
   }
@@ -55,19 +55,19 @@ export class AgentConfigBuilder {
     return this
   }
 
-  // Sets the passthrough flag of the agent.
-  withPassthrough(): AgentConfigBuilder {
-    this.config.passthrough = true
+  // Disables the passthrough feature of the agent.
+  withoutPassthrough(): AgentConfigBuilder {
+    this.config.passthrough = false
     return this
   }
 
-  // WithAutocapture will enable or disable the autocapture feature of the agent.
-  withAutocapture(): AgentConfigBuilder {
-    this.config.autocapture = true
+  // Disables the autocapture feature of the agent.
+  withoutAutocapture(): AgentConfigBuilder {
+    this.config.autocapture = false
     return this
   }
 
-  // Sets the noop flag of the agent.
+  // Sets the agent to noop mode.
   withNoop(): AgentConfigBuilder {
     this.config.noop = true
     return this

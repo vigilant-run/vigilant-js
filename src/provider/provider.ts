@@ -12,11 +12,11 @@ export interface LogProvider {
 }
 
 export class LogProviderFactory {
-  static create(autocapture: boolean): LogProvider {
-    if (autocapture && BunLogProvider.isAllowed()) {
+  static create(enabled: boolean): LogProvider {
+    if (enabled && BunLogProvider.isAllowed()) {
       const bunLogProvider = new BunLogProvider()
       return bunLogProvider
-    } else if (autocapture && NodeLogProvider.isAllowed()) {
+    } else if (enabled && NodeLogProvider.isAllowed()) {
       const nodeLogProvider = new NodeLogProvider()
       return nodeLogProvider
     } else {

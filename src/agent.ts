@@ -3,6 +3,10 @@ import { AgentConfig, gateConfig } from './config'
 import { Log, passthroughLog } from './logs'
 import { AgentNotInitializedError } from './errors'
 import { LogProvider, LogProviderFactory } from './provider/provider'
+import {
+  AttributeProvider,
+  AttributeProviderFactory,
+} from './attributes/attributes'
 
 export var globalAgent: Agent | null = null
 
@@ -31,6 +35,8 @@ export class Agent {
   private autocapture: boolean
 
   private logProvider: LogProvider | null
+  private attributeProvider: AttributeProvider | null
+
   private logsBatcher: Batcher<Log>
 
   constructor(config: AgentConfig) {
@@ -42,15 +48,22 @@ export class Agent {
     this.autocapture = config.autocapture
 
     this.logProvider = null
+    this.attributeProvider = null
 
     this.logsBatcher = createLogBatcher(this.endpoint, this.token)
   }
 
   // Start the agent. This will start the event batchers.
   start = () => {
-    this.logProvider = LogProviderFactory.create(this.autocapture)
-    this.logProvider.setLogFn(this.sendLog)
     this.logsBatcher.start()
+
+    const attributeProvider = AttributeProviderFactory.create()
+    this.attributeProvider = attributeProvider
+
+    const enabled = this.autocapture && !this.noop
+    const logProvider = LogProviderFactory.create(enabled)
+    this.logProvider = logProvider
+    this.logProvider.setLogFn(this.sendLog)
     this.logProvider.enable()
   }
 
@@ -62,6 +75,10 @@ export class Agent {
 
   // Queues a log to be sent.
   sendLog = (log: Log) => {
+    if (this.attributeProvider) {
+      this.attributeProvider.update(log.attributes)
+    }
+
     if (this.passthrough && this.logProvider) {
       passthroughLog(log, this.logProvider.getPassthroughFn(log.level))
     }

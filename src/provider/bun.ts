@@ -1,6 +1,9 @@
 import { LogFn, LogLevel, LogPassthroughFn } from '../logs'
 import { LogProvider } from './provider'
 
+// BunLogProvider is a log provider for Bun.
+// This provider allows you to automatically capture logs from within the Bun runtime.
+// These logs are forwarded to the Agent.
 export class BunLogProvider implements LogProvider {
   private logFn: LogFn | null
 
@@ -26,6 +29,7 @@ export class BunLogProvider implements LogProvider {
     this.consoleTrace = console.trace.bind(console)
   }
 
+  // Checks if Bun is the current runtime.
   static isAllowed = (): boolean => {
     return (
       process.versions.bun !== null &&
@@ -35,12 +39,14 @@ export class BunLogProvider implements LogProvider {
     )
   }
 
+  // Enables the log provider.
   enable = () => {
     this.redirectStdout()
     this.redirectStderr()
     this.redirectConsoleLog()
   }
 
+  // Disables the log provider.
   disable = () => {
     if (this.stdout) Bun.stdout.write = this.stdout
     if (this.stderr) Bun.stderr.write = this.stderr
@@ -52,10 +58,12 @@ export class BunLogProvider implements LogProvider {
     if (this.consoleTrace) console.trace = this.consoleTrace
   }
 
+  // Sets the log function.
   setLogFn = (logFn: LogFn) => {
     this.logFn = logFn
   }
 
+  // Returns the passthrough function for the given log level.
   getPassthroughFn = (level: LogLevel): LogPassthroughFn => {
     switch (level) {
       case LogLevel.error:
@@ -71,6 +79,7 @@ export class BunLogProvider implements LogProvider {
     }
   }
 
+  // Redirects the stdout to the log function.
   private redirectStdout = () => {
     const loggerInfo = this.logInfo.bind(this)
     Bun.stdout.write = function (chunk: string): Promise<number> {
@@ -79,6 +88,7 @@ export class BunLogProvider implements LogProvider {
     }
   }
 
+  // Redirects the stderr to the log function.
   private redirectStderr = () => {
     const loggerError = this.logError.bind(this)
     Bun.stderr.write = function (chunk: string): Promise<number> {
@@ -87,6 +97,7 @@ export class BunLogProvider implements LogProvider {
     }
   }
 
+  // Redirects the console log to the log function.
   private redirectConsoleLog = () => {
     console.log = this.logInfo.bind(this)
     console.error = this.logError.bind(this)
@@ -96,6 +107,7 @@ export class BunLogProvider implements LogProvider {
     console.debug = this.logDebug.bind(this)
   }
 
+  // Logs an info message.
   private logInfo = (message: string): void => {
     if (!this.logFn) return
     this.logFn({
@@ -106,22 +118,27 @@ export class BunLogProvider implements LogProvider {
     })
   }
 
+  // Logs an error message.
   private logError = (message: string): void => {
     return this.getLogLevelFunc(LogLevel.error)(message)
   }
 
+  // Logs a warning message.
   private logWarn = (message: string): void => {
     return this.getLogLevelFunc(LogLevel.warn)(message)
   }
 
+  // Logs a debug message.
   private logDebug = (message: string): void => {
     return this.getLogLevelFunc(LogLevel.debug)(message)
   }
 
+  // Logs a trace message.
   private logTrace = (message: string): void => {
     return this.getLogLevelFunc(LogLevel.trace)(message)
   }
 
+  // Returns the log level function for the given log level.
   private getLogLevelFunc = (level: LogLevel): ((message: string) => void) => {
     return (message: string) => {
       const logFn = this.logFn
