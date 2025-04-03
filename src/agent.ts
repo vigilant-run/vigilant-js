@@ -2,6 +2,7 @@ import { Batcher, createBatcher } from './batcher'
 import { AgentConfig, gateConfig } from './config'
 import { Log, passthroughLog } from './logs'
 import { AgentNotInitializedError } from './errors'
+import { LogProvider, LogProviderFactory } from './provider/provider'
 
 export var globalAgent: Agent | null = null
 
@@ -27,8 +28,9 @@ export class Agent {
   private token: string
   private noop: boolean
   private passthrough: boolean
-  private passthroughWriter: (message: string) => void
+  private autocapture: boolean
 
+  private logProvider: LogProvider | null
   private logsBatcher: Batcher<Log>
 
   constructor(config: AgentConfig) {
@@ -37,25 +39,31 @@ export class Agent {
     this.token = config.token
     this.noop = config.noop
     this.passthrough = config.passthrough
-    this.passthroughWriter = config.passthroughWriter
+    this.autocapture = config.autocapture
+
+    this.logProvider = null
 
     this.logsBatcher = createLogBatcher(this.endpoint, this.token)
   }
 
   // Start the agent. This will start the event batchers.
   start = () => {
+    this.logProvider = LogProviderFactory.create(this.autocapture)
+    this.logProvider.setLogFn(this.sendLog)
     this.logsBatcher.start()
+    this.logProvider.enable()
   }
 
   // Shutdown the agent. This will shutdown the event batchers.
   shutdown = async () => {
+    this.logProvider?.disable()
     await this.logsBatcher.shutdown()
   }
 
   // Queues a log to be sent.
   sendLog = (log: Log) => {
-    if (this.passthrough) {
-      passthroughLog(log, this.passthroughWriter)
+    if (this.passthrough && this.logProvider) {
+      passthroughLog(log, this.logProvider.getPassthroughFn(log.level))
     }
 
     if (this.noop) return

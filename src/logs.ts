@@ -20,13 +20,9 @@ export type Log = {
   attributes: Record<string, string>
 }
 
-export function passthroughLog(log: Log, writer: (message: string) => void) {
-  const { timestamp, body, level, attributes } = log
-  const stringAttributes = Object.entries(attributes)
-    .map(([key, value]) => `${key}=${value}`)
-    .join(', ')
-  writer(`[${timestamp}] [${level}] ${body} ${stringAttributes}`)
-}
+export type LogPassthroughFn = (message: string) => void
+
+export type LogFn = (log: Log) => void
 
 /**
  * Logs an info message.
@@ -106,6 +102,15 @@ export function logTrace(message: string, attributes?: Record<string, string>) {
   const log = createLog(LogLevel.trace, message, attributes)
 
   globalAgent.sendLog(log)
+}
+
+// Internal function to passthrough logs to the console.
+export function passthroughLog(log: Log, writer: LogPassthroughFn) {
+  const { body, level, attributes } = log
+  const stringAttributes = Object.entries(attributes)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(', ')
+  writer(`[${level}] ${body} ${stringAttributes}`)
 }
 
 function createLog(

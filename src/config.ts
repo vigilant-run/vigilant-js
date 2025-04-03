@@ -11,7 +11,7 @@ export type AgentConfig = {
   token: string
   insecure: boolean
   passthrough: boolean
-  passthroughWriter: (message: string) => void
+  autocapture: boolean
   noop: boolean
 }
 
@@ -26,7 +26,7 @@ export class AgentConfigBuilder {
       endpoint: 'ingress.vigilant.run',
       insecure: false,
       passthrough: false,
-      passthroughWriter: () => {},
+      autocapture: false,
       noop: false,
     }
   }
@@ -58,7 +58,12 @@ export class AgentConfigBuilder {
   // Sets the passthrough flag of the agent.
   withPassthrough(): AgentConfigBuilder {
     this.config.passthrough = true
-    this.config.passthroughWriter = console.log
+    return this
+  }
+
+  // WithAutocapture will enable or disable the autocapture feature of the agent.
+  withAutocapture(): AgentConfigBuilder {
+    this.config.autocapture = true
     return this
   }
 
@@ -105,6 +110,6 @@ export function isAgentConfig(config: any): config is AgentConfig {
     typeof config.insecure === 'boolean' &&
     typeof config.noop === 'boolean' &&
     typeof config.passthrough === 'boolean' &&
-    typeof config.passthroughWriter === 'function'
+    typeof config.autocapture === 'boolean'
   )
 }
