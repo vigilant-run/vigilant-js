@@ -80,12 +80,20 @@ The keys and values must be strings.`,
 logInfo('Hello, world!', { user: 'A Name', id: 'An ID' })`,
 )
 
-export const InvalidMessageError = buildError(
+export const InvalidLogMessageError = buildError(
   `The message is invalid.
 The message must be a string.`,
   `import { logInfo } from 'vigilant-js'
 
 logInfo('Hello, world!')`,
+)
+
+export const InvalidAlertTitleError = buildError(
+  `The alert title is invalid.
+The title must be a string.`,
+  `import { createAlert } from 'vigilant-js'
+
+createAlert('Hello, world!')`,
 )
 
 export function buildError(message: string, exampleUsage?: string): Error {

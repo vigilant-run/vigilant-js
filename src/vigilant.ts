@@ -1,6 +1,7 @@
 import { Batcher, createBatcher } from './batcher'
 import { Config, gateConfig } from './config'
-import { Log, passthroughLog } from './logs/logs'
+import { Log, LogLevel, passthroughLog } from './logs/logs'
+import { Alert, passthroughAlert } from './alerts/alerts'
 import { NotInitializedError } from './messages'
 import { LogProvider, LogProviderFactory } from './logs/provider'
 import {
@@ -9,7 +10,6 @@ import {
 } from './attributes/attributes'
 
 export var globalInstance: Vigilant | null = null
-var shutdownRequested = false
 
 // Initialize the global instance with the provided configuration.
 // Automatically shuts down the global instance when the process is terminated.
@@ -17,15 +17,12 @@ export function init(config: Config) {
   gateConfig(config)
   globalInstance = new Vigilant(config)
   globalInstance.start()
-
-  process.on('exit', shutdownHook)
-  process.on('SIGINT', shutdownHook)
-  process.on('SIGTERM', shutdownHook)
+  addShutdownListeners()
 }
 
 // Manually shutdown the global instance.
 export async function shutdown() {
-  await shutdownHook()
+  await handleShutdown()
 }
 
 // Vigilant is a class used to send logs, alerts, and metrics to Vigilant.
@@ -43,6 +40,7 @@ export class Vigilant {
   private attributeProvider: AttributeProvider | null
 
   private logsBatcher: Batcher<Log>
+  private alertsBatcher: Batcher<Alert>
 
   constructor(config: Config) {
     this.name = config.name
@@ -56,11 +54,13 @@ export class Vigilant {
     this.attributeProvider = null
 
     this.logsBatcher = createLogBatcher(this.endpoint, this.token)
+    this.alertsBatcher = createAlertBatcher(this.endpoint, this.token)
   }
 
   // Start the global instance. This will start the event batchers.
   start = () => {
     this.logsBatcher.start()
+    this.alertsBatcher.start()
 
     const attributeProvider = AttributeProviderFactory.create()
     this.attributeProvider = attributeProvider
@@ -75,7 +75,10 @@ export class Vigilant {
   // Shutdown the global instance. This will shutdown the event batchers.
   shutdown = async () => {
     this.logProvider?.disable()
-    await this.logsBatcher.shutdown()
+    await Promise.all([
+      this.alertsBatcher.shutdown(),
+      this.logsBatcher.shutdown(),
+    ])
   }
 
   // Queues a log to be sent.
@@ -92,10 +95,29 @@ export class Vigilant {
 
     this.logsBatcher.add(log)
   }
+
+  // Queues an alert to be sent.
+  sendAlert = (alert: Alert) => {
+    if (this.attributeProvider) {
+      this.attributeProvider.update(alert.attributes)
+    }
+
+    if (this.passthrough && this.logProvider) {
+      passthroughAlert(alert, this.logProvider.getPassthroughFn(LogLevel.error))
+    }
+
+    if (this.noop) return
+
+    this.alertsBatcher.add(alert)
+  }
 }
 
 function createLogBatcher(endpoint: string, token: string): Batcher<Log> {
   return createBatcher(endpoint, token, 'logs', 'logs')
+}
+
+function createAlertBatcher(endpoint: string, token: string): Batcher<Alert> {
+  return createBatcher(endpoint, token, 'alerts', 'alerts')
 }
 
 function createFormattedEndpoint(endpoint: string, insecure: boolean): string {
@@ -108,12 +130,31 @@ function createFormattedEndpoint(endpoint: string, insecure: boolean): string {
   return prefix + endpoint + '/api/message'
 }
 
-async function shutdownHook() {
+var shutdownRequested = false
+
+async function handleShutdown() {
   if (shutdownRequested) return
   shutdownRequested = true
 
-  if (!globalInstance) throw NotInitializedError
-  await globalInstance.shutdown()
+  try {
+    if (!globalInstance) throw NotInitializedError
+    await globalInstance.shutdown()
+  } catch (error) {
+    console.error('Error during shutdown:', error)
+  } finally {
+    globalInstance = null
+    removeShutdownListeners()
+  }
+}
 
-  globalInstance = null
+async function addShutdownListeners() {
+  process.on('exit', handleShutdown)
+  process.on('SIGINT', handleShutdown)
+  process.on('SIGTERM', handleShutdown)
+}
+
+async function removeShutdownListeners() {
+  process.removeListener('exit', handleShutdown)
+  process.removeListener('SIGINT', handleShutdown)
+  process.removeListener('SIGTERM', handleShutdown)
 }

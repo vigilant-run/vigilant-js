@@ -2,7 +2,7 @@ import { globalInstance } from '../vigilant'
 import {
   NotInitializedError,
   InvalidAttributesError,
-  InvalidMessageError,
+  InvalidLogMessageError,
 } from '../messages'
 
 export enum LogLevel {
@@ -35,7 +35,7 @@ export type LogFn = (log: Log) => void
 export function logInfo(message: string, attributes?: Record<string, string>) {
   if (!globalInstance) throw NotInitializedError
 
-  const log = createLog(LogLevel.info, message, attributes)
+  const log = createLogInstance(LogLevel.info, message, attributes)
 
   globalInstance.sendLog(log)
 }
@@ -51,7 +51,7 @@ export function logInfo(message: string, attributes?: Record<string, string>) {
 export function logDebug(message: string, attributes?: Record<string, string>) {
   if (!globalInstance) throw NotInitializedError
 
-  const log = createLog(LogLevel.debug, message, attributes)
+  const log = createLogInstance(LogLevel.debug, message, attributes)
 
   globalInstance.sendLog(log)
 }
@@ -67,7 +67,7 @@ export function logDebug(message: string, attributes?: Record<string, string>) {
 export function logWarn(message: string, attributes?: Record<string, string>) {
   if (!globalInstance) throw NotInitializedError
 
-  const log = createLog(LogLevel.warn, message, attributes)
+  const log = createLogInstance(LogLevel.warn, message, attributes)
 
   globalInstance.sendLog(log)
 }
@@ -83,7 +83,7 @@ export function logWarn(message: string, attributes?: Record<string, string>) {
 export function logError(message: string, attributes?: Record<string, string>) {
   if (!globalInstance) throw NotInitializedError
 
-  const log = createLog(LogLevel.error, message, attributes)
+  const log = createLogInstance(LogLevel.error, message, attributes)
 
   globalInstance.sendLog(log)
 }
@@ -99,7 +99,7 @@ export function logError(message: string, attributes?: Record<string, string>) {
 export function logTrace(message: string, attributes?: Record<string, string>) {
   if (!globalInstance) throw NotInitializedError
 
-  const log = createLog(LogLevel.trace, message, attributes)
+  const log = createLogInstance(LogLevel.trace, message, attributes)
 
   globalInstance.sendLog(log)
 }
@@ -113,7 +113,7 @@ export function passthroughLog(log: Log, writer: LogPassthroughFn) {
   writer(`[${level}] ${body} ${stringAttributes}`)
 }
 
-function createLog(
+function createLogInstance(
   level: LogLevel,
   message: string,
   attributes?: Record<string, string>,
@@ -130,7 +130,7 @@ function createLog(
 
 function gateMessage(message: string): void {
   if (typeof message !== 'string') {
-    throw InvalidMessageError
+    throw InvalidLogMessageError
   }
 }
 
