@@ -5,7 +5,7 @@ export const ConfigNotValidError = buildError(
 The configuration must be a valid Config.
 Use the 'ConfigBuilder' to create a valid configuration.
 Generate a token by visiting: https://dashboard.vigilant.run/settings/project/api`,
-  `import { init, ConfigBuilder } from 'vigilant-js'
+  `import { init, ConfigBuilder } from '@vigilant/core'
 
 const config = new ConfigBuilder()
   .withName('My Application')
@@ -19,7 +19,7 @@ export const ConfigTokenRequiredError = buildError(
   `You cannot have an empty token when initializing Vigilant.
 Use the 'withToken()' method on the builder to set a token.
 Generate one by visiting: https://dashboard.vigilant.run/settings/project/api`,
-  `import { init, ConfigBuilder } from 'vigilant-js'
+  `import { init, ConfigBuilder } from '@vigilant/core'
 
 const config = new ConfigBuilder()
   .withName('My Application')
@@ -33,7 +33,7 @@ export const ConfigNameRequiredError = buildError(
   `You cannot use an empty name when initializing Vigilant.
 Use the 'withName()' method on the builder to set a name.
 Use the name of your application or service, e.g. 'backend', 'api', etc.`,
-  `import { init, ConfigBuilder } from 'vigilant-js'
+  `import { init, ConfigBuilder } from '@vigilant/core'
 
 const config = new ConfigBuilder()
   .withName('backend')
@@ -58,7 +58,7 @@ export const BatcherInvalidTokenError = buildError(
   `The token you have provided is invalid.
 Please generate a new token by visiting: https://dashboard.vigilant.run/settings/project/api
 If the issue persists, please contact support@vigilant.run`,
-  `import { init, ConfigBuilder } from 'vigilant-js'
+  `import { init, ConfigBuilder } from '@vigilant/core'
 
 const config = new ConfigBuilder()
   .withName('backend')
@@ -75,7 +75,7 @@ export const InvalidAttributesError = buildError(
   `The attributes are invalid.
 Attributes must be a non-null object.
 The keys and values must be strings.`,
-  `import { logInfo } from 'vigilant-js'
+  `import { logInfo } from '@vigilant/core'
 
 logInfo('Hello, world!', { user: 'A Name', id: 'An ID' })`,
 )
@@ -83,7 +83,7 @@ logInfo('Hello, world!', { user: 'A Name', id: 'An ID' })`,
 export const InvalidLogMessageError = buildError(
   `The message is invalid.
 The message must be a string.`,
-  `import { logInfo } from 'vigilant-js'
+  `import { logInfo } from '@vigilant/core'
 
 logInfo('Hello, world!')`,
 )
@@ -91,7 +91,7 @@ logInfo('Hello, world!')`,
 export const InvalidAlertTitleError = buildError(
   `The alert title is invalid.
 The title must be a string.`,
-  `import { createAlert } from 'vigilant-js'
+  `import { createAlert } from '@vigilant/core'
 
 createAlert('Hello, world!')`,
 )

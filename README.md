@@ -5,7 +5,7 @@ This is the JavaScript SDK for Vigilant (https://vigilant.run).
 ## Installation
 
 ```bash
-npm install @vigilant/core
+npm install @vigilant-js/core
 ```
 
 ## Usage
@@ -13,7 +13,7 @@ npm install @vigilant/core
 ### Standard Usage
 
 ```ts
-import { init, ConfigBuilder, logInfo } from '@vigilant/core'
+import { init, ConfigBuilder, logInfo } from '@vigilant-js/core'
 
 const config = new ConfigBuilder()
   .withName('backend-server')
@@ -28,7 +28,7 @@ console.log('Hello, world!')
 ### Logging with attributes
 
 ```ts
-import { init, ConfigBuilder, logInfo } from '@vigilant/core'
+import { init, ConfigBuilder, logInfo } from '@vigilant-js/core'
 
 const config = new ConfigBuilder()
   .withName('backend-server')
@@ -43,7 +43,7 @@ logInfo('Hello, world!', { user: 'John Doe', userId: '1234567890' })
 ### Logging with context attributes
 
 ```ts
-import { init, ConfigBuilder, logInfo, addAttributes } from '@vigilant/core'
+import { init, ConfigBuilder, logInfo, addAttributes } from '@vigilant-js/core'
 
 const config = new ConfigBuilder()
   .withName('backend-server')
