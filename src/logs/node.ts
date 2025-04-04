@@ -1,9 +1,9 @@
-import { LogLevel, LogFn, LogPassthroughFn } from '../logs'
+import { LogLevel, LogFn, LogPassthroughFn } from './logs'
 import { LogProvider } from './provider'
 
 // NodeLogProvider is a log provider for Node.js.
 // This provider allows you to automatically capture logs from within the Node.js runtime.
-// These logs are forwarded to the Agent.
+// These logs are forwarded to the caller.
 export class NodeLogProvider implements LogProvider {
   private logFn: LogFn | null
 

@@ -1,9 +1,9 @@
-import { LogFn, LogLevel, LogPassthroughFn } from '../logs'
+import { LogFn, LogLevel, LogPassthroughFn } from './logs'
 import { LogProvider } from './provider'
 
 // BunLogProvider is a log provider for Bun.
 // This provider allows you to automatically capture logs from within the Bun runtime.
-// These logs are forwarded to the Agent.
+// These logs are forwarded to the caller.
 export class BunLogProvider implements LogProvider {
   private logFn: LogFn | null
 

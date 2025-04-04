@@ -1,5 +1,5 @@
-import { LogFn, LogPassthroughFn } from '../logs'
-import { LogLevel } from '../logs'
+import { LogFn, LogPassthroughFn } from './logs'
+import { LogLevel } from './logs'
 import { NodeLogProvider } from './node'
 import { NoopLogProvider } from './noop'
 import { BunLogProvider } from './bun'

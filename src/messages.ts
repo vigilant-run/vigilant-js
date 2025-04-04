@@ -2,12 +2,12 @@ import chalk from 'chalk'
 
 export const ConfigNotValidError = buildError(
   `The configuration is invalid.
-The configuration must be a valid AgentConfig.
-Use the 'AgentConfigBuilder' to create a valid configuration.
+The configuration must be a valid Config.
+Use the 'ConfigBuilder' to create a valid configuration.
 Generate a token by visiting: https://dashboard.vigilant.run/settings/project/api`,
-  `import { init, AgentConfigBuilder } from 'vigilant-js'
+  `import { init, ConfigBuilder } from 'vigilant-js'
 
-const config = new AgentConfigBuilder()
+const config = new ConfigBuilder()
   .withName('My Application')
   .withToken('your-token-here')
   .build()
@@ -16,12 +16,12 @@ init(config)`,
 )
 
 export const ConfigTokenRequiredError = buildError(
-  `You cannot have an empty token when creating the Vigilant Agent.
+  `You cannot have an empty token when initializing Vigilant.
 Use the 'withToken()' method on the builder to set a token.
 Generate one by visiting: https://dashboard.vigilant.run/settings/project/api`,
-  `import { init, AgentConfigBuilder } from 'vigilant-js'
+  `import { init, ConfigBuilder } from 'vigilant-js'
 
-const config = new AgentConfigBuilder()
+const config = new ConfigBuilder()
   .withName('My Application')
   .withToken('your-token-here')
   .build()
@@ -30,12 +30,12 @@ init(config)`,
 )
 
 export const ConfigNameRequiredError = buildError(
-  `You cannot use an empty name when creating the Vigilant Agent.
+  `You cannot use an empty name when initializing Vigilant.
 Use the 'withName()' method on the builder to set a name.
 Use the name of your application or service, e.g. 'backend', 'api', etc.`,
-  `import { init, AgentConfigBuilder } from 'vigilant-js'
+  `import { init, ConfigBuilder } from 'vigilant-js'
 
-const config = new AgentConfigBuilder()
+const config = new ConfigBuilder()
   .withName('backend')
   .withToken('your-token-here')
   .build()
@@ -43,10 +43,10 @@ const config = new AgentConfigBuilder()
 init(config)`,
 )
 
-export const AgentNotInitializedError = buildError(
-  `The Vigilant Agent has not been initialized.
-Use the 'init()' function to initialize the agent.`,
-  `const config = new AgentConfigBuilder()
+export const NotInitializedError = buildError(
+  `Vigilant has not been initialized.
+Use the 'init()' function to initialize Vigilant.`,
+  `const config = new ConfigBuilder()
   .withName('backend')
   .withToken('your-token-here')
   .build()
@@ -58,9 +58,9 @@ export const BatcherInvalidTokenError = buildError(
   `The token you have provided is invalid.
 Please generate a new token by visiting: https://dashboard.vigilant.run/settings/project/api
 If the issue persists, please contact support@vigilant.run`,
-  `import { init, AgentConfigBuilder } from 'vigilant-js'
+  `import { init, ConfigBuilder } from 'vigilant-js'
 
-const config = new AgentConfigBuilder()
+const config = new ConfigBuilder()
   .withName('backend')
   .withToken('your-token-here')
   .build()`,
@@ -88,13 +88,17 @@ The message must be a string.`,
 logInfo('Hello, world!')`,
 )
 
-function buildError(message: string, exampleUsage?: string) {
-  let errorMessage = `\n\n${chalk.hex('#FF8480').bold('[ **** Vigilant Error **** ]')}\n\n`
+export function buildError(message: string, exampleUsage?: string): Error {
+  let errorMessage = `${chalk.hex('#FF8480').bold('[ **** Vigilant Error **** ]')}\n\n`
   errorMessage += `${message}\n\n`
 
   if (exampleUsage) {
-    errorMessage += `${chalk.hex('#81FF80')('[ **** Correct Usage **** ]')}\n\n${exampleUsage}\n\n`
+    errorMessage += `${chalk.hex('#81FF80')('[ **** Correct Usage **** ]')}\n\n${exampleUsage}`
   }
 
   return new Error(errorMessage)
+}
+
+export function buildWarning(message: string): string {
+  return `${chalk.hex('#FF8480').bold('[ **** Vigilant Warning **** ]')}\n\n${message}`
 }

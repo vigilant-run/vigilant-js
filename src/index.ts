@@ -1,4 +1,4 @@
-export { init, shutdown } from './agent'
-export { AgentConfigBuilder, AgentConfig } from './config'
-export { logInfo, logDebug, logWarn, logError, logTrace } from './logs'
-export { withAttributes } from './attributes/storage'
+export { init, shutdown } from './vigilant'
+export { ConfigBuilder, Config } from './config'
+export { logInfo, logDebug, logWarn, logError, logTrace } from './logs/logs'
+export { addAttributes } from './attributes/storage'

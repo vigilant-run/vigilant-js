@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { BatcherInvalidTokenError, BatchInternalServerError } from './errors'
+import { BatcherInvalidTokenError, BatchInternalServerError } from './messages'
 
 // Batcher is a class used to batch and event batches to Vigilant.
 export class Batcher<T> {

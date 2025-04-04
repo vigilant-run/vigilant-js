@@ -1,9 +1,9 @@
-import { globalAgent } from './agent'
+import { globalInstance } from '../vigilant'
 import {
-  AgentNotInitializedError,
+  NotInitializedError,
   InvalidAttributesError,
   InvalidMessageError,
-} from './errors'
+} from '../messages'
 
 export enum LogLevel {
   error = 'ERROR',
@@ -33,11 +33,11 @@ export type LogFn = (log: Log) => void
  * logInfo('Hello, world!', { user: 'John Doe' })
  */
 export function logInfo(message: string, attributes?: Record<string, string>) {
-  if (!globalAgent) throw AgentNotInitializedError
+  if (!globalInstance) throw NotInitializedError
 
   const log = createLog(LogLevel.info, message, attributes)
 
-  globalAgent.sendLog(log)
+  globalInstance.sendLog(log)
 }
 
 /**
@@ -49,11 +49,11 @@ export function logInfo(message: string, attributes?: Record<string, string>) {
  * logDebug('Hello, world!', { user: 'John Doe' })
  */
 export function logDebug(message: string, attributes?: Record<string, string>) {
-  if (!globalAgent) throw AgentNotInitializedError
+  if (!globalInstance) throw NotInitializedError
 
   const log = createLog(LogLevel.debug, message, attributes)
 
-  globalAgent.sendLog(log)
+  globalInstance.sendLog(log)
 }
 
 /**
@@ -65,11 +65,11 @@ export function logDebug(message: string, attributes?: Record<string, string>) {
  * logWarn('Hello, world!', { user: 'John Doe' })
  */
 export function logWarn(message: string, attributes?: Record<string, string>) {
-  if (!globalAgent) throw AgentNotInitializedError
+  if (!globalInstance) throw NotInitializedError
 
   const log = createLog(LogLevel.warn, message, attributes)
 
-  globalAgent.sendLog(log)
+  globalInstance.sendLog(log)
 }
 
 /**
@@ -81,11 +81,11 @@ export function logWarn(message: string, attributes?: Record<string, string>) {
  * logError('Hello, world!', { user: 'John Doe' })
  */
 export function logError(message: string, attributes?: Record<string, string>) {
-  if (!globalAgent) throw AgentNotInitializedError
+  if (!globalInstance) throw NotInitializedError
 
   const log = createLog(LogLevel.error, message, attributes)
 
-  globalAgent.sendLog(log)
+  globalInstance.sendLog(log)
 }
 
 /**
@@ -97,11 +97,11 @@ export function logError(message: string, attributes?: Record<string, string>) {
  * logTrace('Hello, world!', { user: 'John Doe' })
  */
 export function logTrace(message: string, attributes?: Record<string, string>) {
-  if (!globalAgent) throw AgentNotInitializedError
+  if (!globalInstance) throw NotInitializedError
 
   const log = createLog(LogLevel.trace, message, attributes)
 
-  globalAgent.sendLog(log)
+  globalInstance.sendLog(log)
 }
 
 // Internal function to passthrough logs to the console.

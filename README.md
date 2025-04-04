@@ -5,85 +5,55 @@ This is the JavaScript SDK for Vigilant (https://vigilant.run).
 ## Installation
 
 ```bash
-npm install vigilant-js
+npm install @vigilant/core
 ```
 
-## Logging Usage (Standard)
-```typescript
-import { Logger } from 'vigilant-js'
+## Usage
 
-const logger = new Logger({
-  name: 'service-name',
-  endpoint: 'ingress.vigilant.run',
-  token: 'tk_1234567890',
-})
+### Standard Usage
 
-// Basic logging
-logger.info('User logged in')
-logger.warn('Rate limit approaching')
-logger.error('Database connection failed')
-logger.debug('Processing request')
+```ts
+import { init, ConfigBuilder, logInfo } from '@vigilant/core'
 
-// Logging with additional attributes
-logger.info('Order processed', { orderId: '123', amount: 99.99 })
+const config = new ConfigBuilder()
+  .withName('backend-server')
+  .withToken('generated-token-here')
+  .build()
 
-// Application shutdown
-await logger.shutdown()
-```
+init(config)
 
-## Logging Usage (Autocapture)
-```typescript
-import { Logger } from 'vigilant-js'
-
-// Create the logger
-const logger = new Logger({
-  name: 'service-name',
-  endpoint: 'log.vigilant.run:4317',
-  token: 'tk_1234567890',
-})
-
-// Enable autocapture
-logger.autocapture_enable()
-
-// Log some messages to the console
 console.log('Hello, world!')
-console.error('Error!')
-
-// Application shutdown
-await logger.shutdown()
 ```
 
-## Logging Usage (Attributes)
-Note: This is only avaiable in a Node.js environment.
+### Logging with attributes
 
-```typescript
-import { Logger, addAttributes, clearAttributes, removeAttributes } from 'vigilant-js'
+```ts
+import { init, ConfigBuilder, logInfo } from '@vigilant/core'
 
-// Create a logger
-const logger = new Logger({
-  name: 'service-name',
-  endpoint: 'log.vigilant.run:4317',
-  token: 'tk_0123456789',
+const config = new ConfigBuilder()
+  .withName('backend-server')
+  .withToken('generated-token-here')
+  .build()
+
+init(config)
+
+logInfo('Hello, world!', { user: 'John Doe', userId: '1234567890' })
+```
+
+### Logging with context attributes
+
+```ts
+import { init, ConfigBuilder, logInfo, addAttributes } from '@vigilant/core'
+
+const config = new ConfigBuilder()
+  .withName('backend-server')
+  .withToken('generated-token-here')
+  .build()
+
+init(config)
+
+addAttributes({ user: 'John Doe', userId: '1234567890' }, () => {
+  logDebug('Hello, world with attributes!')
+  logInfo('Hello, world with attributes!')
 })
-
-// Enable autocapture
-logger.autocapture_enable()
-
-// Add an attribute
-addAttributes({ user_id: '1', another_user_id: '2' }, () => {
-  console.log('Testing with two attributes')
-
-  // Remove one attribute
-  removeAttributes(['user_id'], () => {
-    console.log('Testing with one attribute')
-
-    // Clear all attributes
-    clearAttributes(() => {
-      console.log('Testing without attributes')
-    })
-  })
-})
-
-// Shutdown the logger
-await logger.shutdown()
 ```

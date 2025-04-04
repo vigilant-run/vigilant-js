@@ -1,32 +1,37 @@
 import { Batcher, createBatcher } from './batcher'
-import { AgentConfig, gateConfig } from './config'
-import { Log, passthroughLog } from './logs'
-import { AgentNotInitializedError } from './errors'
-import { LogProvider, LogProviderFactory } from './provider/provider'
+import { Config, gateConfig } from './config'
+import { Log, passthroughLog } from './logs/logs'
+import { NotInitializedError } from './messages'
+import { LogProvider, LogProviderFactory } from './logs/provider'
 import {
   AttributeProvider,
   AttributeProviderFactory,
 } from './attributes/attributes'
 
-export var globalAgent: Agent | null = null
+export var globalInstance: Vigilant | null = null
+var shutdownRequested = false
 
-export function init(config: AgentConfig) {
+// Initialize the global instance with the provided configuration.
+// Automatically shuts down the global instance when the process is terminated.
+export function init(config: Config) {
   gateConfig(config)
-  globalAgent = new Agent(config)
-  globalAgent.start()
+  globalInstance = new Vigilant(config)
+  globalInstance.start()
+
+  process.on('exit', shutdownHook)
+  process.on('SIGINT', shutdownHook)
+  process.on('SIGTERM', shutdownHook)
 }
 
+// Manually shutdown the global instance.
 export async function shutdown() {
-  if (!globalAgent) throw AgentNotInitializedError
-
-  await globalAgent.shutdown()
-  globalAgent = null
+  await shutdownHook()
 }
 
-// Agent is a class used to send logs, alerts, and metrics to Vigilant.
+// Vigilant is a class used to send logs, alerts, and metrics to Vigilant.
 // It can be configured to be a noop, which will prevent it from sending any data to Vigilant.
 // It requires a name, endpoint, and token to be configured properly.
-export class Agent {
+export class Vigilant {
   private name: string
   private endpoint: string
   private token: string
@@ -39,7 +44,7 @@ export class Agent {
 
   private logsBatcher: Batcher<Log>
 
-  constructor(config: AgentConfig) {
+  constructor(config: Config) {
     this.name = config.name
     this.endpoint = createFormattedEndpoint(config.endpoint, config.insecure)
     this.token = config.token
@@ -53,7 +58,7 @@ export class Agent {
     this.logsBatcher = createLogBatcher(this.endpoint, this.token)
   }
 
-  // Start the agent. This will start the event batchers.
+  // Start the global instance. This will start the event batchers.
   start = () => {
     this.logsBatcher.start()
 
@@ -67,7 +72,7 @@ export class Agent {
     this.logProvider.enable()
   }
 
-  // Shutdown the agent. This will shutdown the event batchers.
+  // Shutdown the global instance. This will shutdown the event batchers.
   shutdown = async () => {
     this.logProvider?.disable()
     await this.logsBatcher.shutdown()
@@ -101,4 +106,14 @@ function createFormattedEndpoint(endpoint: string, insecure: boolean): string {
     prefix = 'https://'
   }
   return prefix + endpoint + '/api/message'
+}
+
+async function shutdownHook() {
+  if (shutdownRequested) return
+  shutdownRequested = true
+
+  if (!globalInstance) throw NotInitializedError
+  await globalInstance.shutdown()
+
+  globalInstance = null
 }

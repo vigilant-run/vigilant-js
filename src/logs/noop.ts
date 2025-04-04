@@ -1,8 +1,8 @@
-import { LogLevel, LogPassthroughFn } from '../logs'
+import { LogLevel, LogPassthroughFn } from './logs'
 import { LogProvider } from './provider'
 
 // NoopLogProvider is a log provider that does nothing.
-// This log provider will not redirect any logs to the Agent.
+// This log provider will not redirect any logs to the caller.
 export class NoopLogProvider implements LogProvider {
   enable = (): void => {}
 

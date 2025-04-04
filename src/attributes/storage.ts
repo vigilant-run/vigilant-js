@@ -1,6 +1,7 @@
+import { buildWarning } from '../messages'
 import { AttributeAppender } from './attributes'
 
-export function withAttributes(
+export function addAttributes(
   attributes: Record<string, string>,
   callback: () => void,
 ): void {
@@ -35,6 +36,7 @@ interface Storage<T> {
 
 class NoopStorage implements Storage<Record<string, string>> {
   run = (_: Record<string, string>, callback: () => void): void => {
+    console.warn(InvalidEnvironmentWarning)
     callback()
   }
   getStore = (): Record<string, string> | undefined => {
@@ -54,3 +56,9 @@ function initGlobalStorage(): void {
 }
 
 initGlobalStorage()
+
+const InvalidEnvironmentWarning = buildWarning(
+  `Attribute storage not supported in this environment.
+Please use an environment that supports AsyncLocalStorage.
+Runtimes that support AsyncLocalStorage include Node.js 14.0.0+ and Bun 1.0.0+.`,
+)

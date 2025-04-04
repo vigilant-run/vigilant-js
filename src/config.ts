@@ -2,10 +2,10 @@ import {
   ConfigNameRequiredError,
   ConfigNotValidError,
   ConfigTokenRequiredError,
-} from './errors'
+} from './messages'
 
-// AgentConfig is used to configure the Vigilant Agent when it is created.
-export type AgentConfig = {
+// Config is used to configure the Vigilant global instance when it is created.
+export type Config = {
   name: string
   endpoint: string
   token: string
@@ -15,9 +15,9 @@ export type AgentConfig = {
   noop: boolean
 }
 
-// AgentConfigBuilder is used to build an AgentConfig.
-export class AgentConfigBuilder {
-  private config: AgentConfig
+// ConfigBuilder is used to build a Config.
+export class ConfigBuilder {
+  private config: Config
 
   constructor() {
     this.config = {
@@ -31,50 +31,50 @@ export class AgentConfigBuilder {
     }
   }
 
-  // Sets the name of the agent.
-  withName(name: string): AgentConfigBuilder {
+  // Sets the name added to all logs, alerts, and metrics.
+  withName(name: string): ConfigBuilder {
     this.config.name = name
     return this
   }
 
-  // Sets the endpoint of the agent.
-  withEndpoint(endpoint: string): AgentConfigBuilder {
+  // Sets the endpoint used by Vigilant.
+  withEndpoint(endpoint: string): ConfigBuilder {
     this.config.endpoint = endpoint
     return this
   }
 
-  // Sets the token of the agent.
-  withToken(token: string): AgentConfigBuilder {
+  // Sets the token of used by Vigilant.
+  withToken(token: string): ConfigBuilder {
     this.config.token = token
     return this
   }
 
-  // Sets the insecure flag of the agent.
-  withInsecure(): AgentConfigBuilder {
+  // Sets Vigilant to use an insecure endpoint.
+  withInsecure(): ConfigBuilder {
     this.config.insecure = true
     return this
   }
 
-  // Disables the passthrough feature of the agent.
-  withoutPassthrough(): AgentConfigBuilder {
+  // Disables the passthrough feature of Vigilant.
+  withoutPassthrough(): ConfigBuilder {
     this.config.passthrough = false
     return this
   }
 
-  // Disables the autocapture feature of the agent.
-  withoutAutocapture(): AgentConfigBuilder {
+  // Disables the autocapture feature of Vigilant.
+  withoutAutocapture(): ConfigBuilder {
     this.config.autocapture = false
     return this
   }
 
-  // Sets the agent to noop mode.
-  withNoop(): AgentConfigBuilder {
+  // Starts Vigilant in noop mode.
+  withNoop(): ConfigBuilder {
     this.config.noop = true
     return this
   }
 
-  // Builds the AgentConfig.
-  build(): AgentConfig {
+  // Builds the Config.
+  build(): Config {
     if (this.config.token === '') {
       throw ConfigTokenRequiredError
     }
@@ -86,7 +86,7 @@ export class AgentConfigBuilder {
 }
 
 export function gateConfig(config: any): void {
-  if (!isAgentConfig(config)) {
+  if (!isConfig(config)) {
     throw ConfigNotValidError
   }
   if (config.name.trim() === '') {
@@ -97,7 +97,7 @@ export function gateConfig(config: any): void {
   }
 }
 
-export function isAgentConfig(config: any): config is AgentConfig {
+export function isConfig(config: any): config is Config {
   return (
     typeof config === 'object' &&
     config !== null &&
