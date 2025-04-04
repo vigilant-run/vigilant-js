@@ -1,45 +1,13 @@
 {
-  "name": "@vigilant-js/core",
-  "author": "Vigilant",
+  "name": "vigilant-js",
   "version": "1.0.0",
-  "description": "Base package for all Vigilant JS packages",
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
-  "types": "dist/types/index.d.ts",
-  "typesVersions": {},
-  "files": [
-    "dist/*"
-  ],
-  "exports": {
-    ".": {
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
-    }
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "keywords": [
-    "vigilant",
-    "sdk"
+  "private": true,
+  "workspaces": [
+    "packages/*"
   ],
   "scripts": {
-    "build": "npm run build:esm && npm run build:cjs",
-    "build:esm": "tsc --project tsconfig.esm.json",
-    "build:cjs": "node build.js",
-    "format": "prettier --write ."
-  },
-  "devDependencies": {
-    "@types/bun": "^1.2.2",
-    "@types/node": "^20.11.19",
-    "esbuild": "^0.19.2",
-    "prettier": "^3.1.0",
-    "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "axios": "^1.7.9",
-    "chalk": "^5.4.1",
-    "proxy-from-env": "^1.1.0"
+    "build": "npm run build --workspaces",
+    "build:core": "npm run build --workspace=@vigilant-js/core",
+    "publish:core": "npm publish --workspace=@vigilant-js/core"
   }
 }
