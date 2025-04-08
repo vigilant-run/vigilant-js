@@ -1,1 +1,2 @@
-export { createMiddleware } from './middleware'
+export { addLogging } from './logs'
+export { addExceptionCapture } from './exceptions'
