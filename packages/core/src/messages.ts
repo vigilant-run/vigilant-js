@@ -65,14 +65,6 @@ The keys and values must be strings.`,
 logInfo('Hello, world!', { user: 'A Name', id: 'An ID' })`,
 )
 
-export const InvalidLogMessageError = buildError(
-  `The message is invalid.
-The message must be a string.`,
-  `import { logInfo } from '@vigilant/core'
-
-logInfo('Hello, world!')`,
-)
-
 export const InvalidAlertTitleError = buildError(
   `The alert title is invalid.
 The title must be a string.`,
@@ -80,6 +72,22 @@ The title must be a string.`,
 
 createAlert('Hello, world!')`,
 )
+
+export const InvalidLogMessageWarning = (message: any) => {
+  return buildWarning(
+    `This message is invalid: ${message}.
+The message must be a string.`,
+  )
+}
+
+export const InvalidAttributesWarning = (
+  attributes: Record<string, string>,
+) => {
+  return buildWarning(
+    `The following attributes are invalid: ${JSON.stringify(attributes)}.
+Only string keys and values are supported.`,
+  )
+}
 
 export function buildError(message: string, exampleUsage?: string): Error {
   let errorMessage = `${chalk.hex('#FF8480').bold('[ **** Vigilant Error **** ]')}\n\n`

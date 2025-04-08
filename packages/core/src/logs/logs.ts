@@ -1,8 +1,8 @@
 import { globalInstance } from '../vigilant'
 import {
   NotInitializedError,
-  InvalidAttributesError,
-  InvalidLogMessageError,
+  InvalidLogMessageWarning,
+  InvalidAttributesWarning,
 } from '../messages'
 import { getCurrentTime } from '../utils'
 
@@ -38,6 +38,7 @@ export function logInfo(message: string, attributes?: Record<string, string>) {
   if (!globalInstance) throw NotInitializedError
 
   const log = createLogInstance(LogLevel.info, message, attributes)
+  if (!log) return
 
   globalInstance.sendLog(log)
 }
@@ -55,6 +56,7 @@ export function logDebug(message: string, attributes?: Record<string, string>) {
   if (!globalInstance) throw NotInitializedError
 
   const log = createLogInstance(LogLevel.debug, message, attributes)
+  if (!log) return
 
   globalInstance.sendLog(log)
 }
@@ -72,6 +74,7 @@ export function logWarn(message: string, attributes?: Record<string, string>) {
   if (!globalInstance) throw NotInitializedError
 
   const log = createLogInstance(LogLevel.warn, message, attributes)
+  if (!log) return
 
   globalInstance.sendLog(log)
 }
@@ -89,6 +92,7 @@ export function logError(message: string, attributes?: Record<string, string>) {
   if (!globalInstance) throw NotInitializedError
 
   const log = createLogInstance(LogLevel.error, message, attributes)
+  if (!log) return
 
   globalInstance.sendLog(log)
 }
@@ -106,6 +110,7 @@ export function logTrace(message: string, attributes?: Record<string, string>) {
   if (!globalInstance) throw NotInitializedError
 
   const log = createLogInstance(LogLevel.trace, message, attributes)
+  if (!log) return
 
   globalInstance.sendLog(log)
 }
@@ -123,33 +128,40 @@ function createLogInstance(
   level: LogLevel,
   message: string,
   attributes?: Record<string, string>,
-): Log {
-  gateMessage(message)
-  gateAttributes(attributes)
+): Log | null {
+  if (!gateInvalidMessage(message)) return null
   return {
     timestamp: getCurrentTime(),
     body: message,
     level: level,
-    attributes: attributes || {},
+    attributes: filterInvalidAttributes(attributes ?? {}),
   }
 }
 
-function gateMessage(message: string): void {
+// Returns null if the message is invalid
+function gateInvalidMessage(message: string): string | null {
   if (typeof message !== 'string') {
-    throw InvalidLogMessageError
+    console.warn(InvalidLogMessageWarning(message))
+    return null
   }
+  return message
 }
 
-function gateAttributes(attributes?: Record<string, string>): void {
-  if (attributes === undefined) return
-
-  if (typeof attributes !== 'object' || attributes === null) {
-    throw InvalidAttributesError
-  }
-
+// Filters out invalid attributes
+function filterInvalidAttributes(
+  attributes: Record<string, string>,
+): Record<string, string> {
+  const validAttributes: Record<string, string> = {}
+  const invalidAttributes: Record<string, string> = {}
   for (const [key, value] of Object.entries(attributes)) {
     if (typeof key !== 'string' || typeof value !== 'string') {
-      throw InvalidAttributesError
+      invalidAttributes[key] = value
+    } else {
+      validAttributes[key] = value
     }
   }
+  if (Object.keys(invalidAttributes).length > 0) {
+    console.warn(InvalidAttributesWarning(invalidAttributes))
+  }
+  return validAttributes
 }
