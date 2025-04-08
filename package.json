@@ -8,8 +8,10 @@
   "scripts": {
     "build": "npm run build --workspaces",
     "build:core": "npm run build --workspace=@vigilant-js/core",
-    "publish:core": "npm publish --workspace=@vigilant-js/core",
     "build:express": "npm run build --workspace=@vigilant-js/express",
+    "bump:core": "npm version patch --workspace=@vigilant-js/core",
+    "bump:express": "npm version patch --workspace=@vigilant-js/express",
+    "publish:core": "npm publish --workspace=@vigilant-js/core",
     "publish:express": "npm publish --workspace=@vigilant-js/express"
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "@vigilant-js/express",
   "author": "Vigilant",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Express middleware for Vigilant",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
