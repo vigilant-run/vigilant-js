@@ -149,12 +149,8 @@ async function handleShutdown() {
 
 async function addShutdownListeners() {
   process.on('exit', handleShutdown)
-  process.on('SIGINT', handleShutdown)
-  process.on('SIGTERM', handleShutdown)
 }
 
 async function removeShutdownListeners() {
   process.removeListener('exit', handleShutdown)
-  process.removeListener('SIGINT', handleShutdown)
-  process.removeListener('SIGTERM', handleShutdown)
 }

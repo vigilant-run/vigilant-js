@@ -1,5 +1,6 @@
 import { LogFn, LogLevel, LogPassthroughFn } from './logs'
 import { LogProvider } from './provider'
+import { getCurrentTime } from '../utils'
 
 // BunLogProvider is a log provider for Bun.
 // This provider allows you to automatically capture logs from within the Bun runtime.
@@ -111,7 +112,7 @@ export class BunLogProvider implements LogProvider {
   private logInfo = (message: string): void => {
     if (!this.logFn) return
     this.logFn({
-      timestamp: new Date().toISOString(),
+      timestamp: getCurrentTime(),
       level: LogLevel.info,
       body: message,
       attributes: {},
@@ -144,7 +145,7 @@ export class BunLogProvider implements LogProvider {
       const logFn = this.logFn
       if (!logFn) return
       logFn({
-        timestamp: new Date().toISOString(),
+        timestamp: getCurrentTime(),
         level: level,
         body: message,
         attributes: {},

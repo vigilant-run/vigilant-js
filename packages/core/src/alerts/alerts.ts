@@ -1,4 +1,5 @@
 import { globalInstance } from '../vigilant'
+import { getCurrentTime } from '../utils'
 import {
   InvalidAlertTitleError,
   InvalidAttributesError,
@@ -31,7 +32,7 @@ function createAlertInstance(
   gateTitle(title)
   gateAttributes(attributes)
   return {
-    timestamp: new Date().toISOString(),
+    timestamp: getCurrentTime(),
     title: title,
     attributes: attributes || {},
   }

@@ -1,5 +1,6 @@
 import { LogLevel, LogFn, LogPassthroughFn } from './logs'
 import { LogProvider } from './provider'
+import { getCurrentTime } from '../utils'
 
 // NodeLogProvider is a log provider for Node.js.
 // This provider allows you to automatically capture logs from within the Node.js runtime.
@@ -128,7 +129,7 @@ export class NodeLogProvider implements LogProvider {
   private logInfo = (message: string): void => {
     if (!this.logFn) return
     this.logFn({
-      timestamp: new Date().toISOString(),
+      timestamp: getCurrentTime(),
       level: LogLevel.info,
       body: message,
       attributes: {},
@@ -139,7 +140,7 @@ export class NodeLogProvider implements LogProvider {
   private logError = (message: string): void => {
     if (!this.logFn) return
     this.logFn({
-      timestamp: new Date().toISOString(),
+      timestamp: getCurrentTime(),
       level: LogLevel.error,
       body: message,
       attributes: {},

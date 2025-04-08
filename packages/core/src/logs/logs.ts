@@ -4,6 +4,7 @@ import {
   InvalidAttributesError,
   InvalidLogMessageError,
 } from '../messages'
+import { getCurrentTime } from '../utils'
 
 export enum LogLevel {
   error = 'ERROR',
@@ -121,7 +122,7 @@ function createLogInstance(
   gateMessage(message)
   gateAttributes(attributes)
   return {
-    timestamp: new Date().toISOString(),
+    timestamp: getCurrentTime(),
     body: message,
     level: level,
     attributes: attributes || {},
