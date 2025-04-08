@@ -13,12 +13,12 @@ npm install @vigilant-js/core
 ### Standard Usage
 
 ```ts
-import { init, ConfigBuilder, logInfo } from '@vigilant-js/core'
+import { init, logInfo } from '@vigilant-js/core'
 
-const config = new ConfigBuilder()
-  .withName('backend-server')
-  .withToken('generated-token-here')
-  .build()
+const config = {
+  name: 'backend-server',
+  token: 'generated-token-here',
+}
 
 init(config)
 
@@ -28,12 +28,12 @@ console.log('Hello, world!')
 ### Logging with attributes
 
 ```ts
-import { init, ConfigBuilder, logInfo } from '@vigilant-js/core'
+import { init, logInfo } from '@vigilant-js/core'
 
-const config = new ConfigBuilder()
-  .withName('backend-server')
-  .withToken('generated-token-here')
-  .build()
+const config = {
+  name: 'backend-server',
+  token: 'generated-token-here',
+}
 
 init(config)
 
@@ -43,12 +43,12 @@ logInfo('Hello, world!', { user: 'John Doe', userId: '1234567890' })
 ### Logging with context attributes
 
 ```ts
-import { init, ConfigBuilder, logInfo, addAttributes } from '@vigilant-js/core'
+import { init, logInfo, addAttributes } from '@vigilant-js/core'
 
-const config = new ConfigBuilder()
-  .withName('backend-server')
-  .withToken('generated-token-here')
-  .build()
+const config = {
+  name: 'backend-server',
+  token: 'generated-token-here',
+}
 
 init(config)
 

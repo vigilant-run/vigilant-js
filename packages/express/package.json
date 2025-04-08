@@ -44,6 +44,7 @@
     "chalk": "^5.4.1",
     "express": "^4.19.2",
     "proxy-from-env": "^1.1.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "@vigilant-js/core": "^1.0.2"
   }
 }

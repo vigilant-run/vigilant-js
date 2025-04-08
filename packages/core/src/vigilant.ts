@@ -2,12 +2,32 @@ import { Batcher, createBatcher } from './batcher'
 import { Config, gateConfig } from './config'
 import { Log, LogLevel, passthroughLog } from './logs/logs'
 import { Alert, passthroughAlert } from './alerts/alerts'
-import { NotInitializedError } from './messages'
+import { ConfigTokenRequiredError, NotInitializedError } from './messages'
 import { LogProvider, LogProviderFactory } from './logs/provider'
 import {
   AttributeProvider,
   AttributeProviderFactory,
 } from './attributes/attributes'
+
+const defaultConfig: VigilantConfig = {
+  name: 'backend',
+  token: 'generated-token-here',
+  endpoint: 'ingress.vigilant.run',
+  insecure: false,
+  passthrough: false,
+  autocapture: true,
+  noop: false,
+}
+
+type VigilantConfig = {
+  name: string
+  token: string
+  endpoint: string
+  insecure: boolean
+  passthrough: boolean
+  autocapture: boolean
+  noop: boolean
+}
 
 export var globalInstance: Vigilant | null = null
 
@@ -15,7 +35,7 @@ export var globalInstance: Vigilant | null = null
 // Automatically shuts down the global instance when the process is terminated.
 export function init(config: Config) {
   gateConfig(config)
-  globalInstance = new Vigilant(config)
+  globalInstance = new Vigilant({ ...defaultConfig, ...config })
   globalInstance.start()
   addShutdownListeners()
 }
@@ -42,7 +62,7 @@ export class Vigilant {
   private logsBatcher: Batcher<Log>
   private alertsBatcher: Batcher<Alert>
 
-  constructor(config: Config) {
+  constructor(config: VigilantConfig) {
     this.name = config.name
     this.endpoint = createFormattedEndpoint(config.endpoint, config.insecure)
     this.token = config.token
