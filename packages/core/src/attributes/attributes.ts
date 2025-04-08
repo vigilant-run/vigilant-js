@@ -1,4 +1,5 @@
-import { StoredAttributeAppender } from './storage'
+import { ServiceNameAttributeAppenderFactory } from './service'
+import { StoredAttributeAppenderFactory } from './storage'
 
 // Adds attributes to each log message
 export interface AttributeAppender {
@@ -21,9 +22,12 @@ export class AttributeProvider {
   }
 }
 
-// Creates a new AttributeProvider with attacked appenders
+// Creates a new AttributeProvider with attached appenders
 export class AttributeProviderFactory {
-  static create(): AttributeProvider {
-    return new AttributeProvider([new StoredAttributeAppender()])
+  static create(serviceName: string): AttributeProvider {
+    return new AttributeProvider([
+      ServiceNameAttributeAppenderFactory.create(serviceName),
+      StoredAttributeAppenderFactory.create(),
+    ])
   }
 }

@@ -82,7 +82,7 @@ export class Vigilant {
     this.logsBatcher.start()
     this.alertsBatcher.start()
 
-    const attributeProvider = AttributeProviderFactory.create()
+    const attributeProvider = AttributeProviderFactory.create(this.name)
     this.attributeProvider = attributeProvider
 
     const enabled = this.autocapture && !this.noop
