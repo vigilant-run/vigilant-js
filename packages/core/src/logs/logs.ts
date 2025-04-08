@@ -30,6 +30,7 @@ export type LogFn = (log: Log) => void
  *
  * @param {string} message - The message to log.
  * @param {Record<string, string>} [attributes] - Additional attributes to include in the log.
+ *
  * @example
  * logInfo('Hello, world!', { user: 'John Doe' })
  */
@@ -46,6 +47,7 @@ export function logInfo(message: string, attributes?: Record<string, string>) {
  *
  * @param {string} message - The message to log.
  * @param {Record<string, string>} [attributes] - Additional attributes to include in the log.
+ *
  * @example
  * logDebug('Hello, world!', { user: 'John Doe' })
  */
@@ -62,6 +64,7 @@ export function logDebug(message: string, attributes?: Record<string, string>) {
  *
  * @param {string} message - The message to log.
  * @param {Record<string, string>} [attributes] - Additional attributes to include in the log.
+ *
  * @example
  * logWarn('Hello, world!', { user: 'John Doe' })
  */
@@ -78,6 +81,7 @@ export function logWarn(message: string, attributes?: Record<string, string>) {
  *
  * @param {string} message - The message to log.
  * @param {Record<string, string>} [attributes] - Additional attributes to include in the log.
+ *
  * @example
  * logError('Hello, world!', { user: 'John Doe' })
  */
@@ -94,6 +98,7 @@ export function logError(message: string, attributes?: Record<string, string>) {
  *
  * @param {string} message - The message to log.
  * @param {Record<string, string>} [attributes] - Additional attributes to include in the log.
+ *
  * @example
  * logTrace('Hello, world!', { user: 'John Doe' })
  */

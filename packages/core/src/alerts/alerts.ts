@@ -14,6 +14,19 @@ export type Alert = {
 
 export type AlertPassthroughFn = (message: string) => void
 
+/**
+ * Create an alert
+ *
+ * Use this to create an alert that will notify you through your enabled alert methods
+ *
+ * Alerts are de-duplicated on the title, so alerts you want grouped should have the same title
+ *
+ * @param title - The title of the alert
+ * @param attributes - The attributes of the alert
+ *
+ * @example
+ * createAlert('db query failed', { 'db.query': 'SELECT * FROM users' })
+ */
 export function createAlert(
   title: string,
   attributes?: Record<string, string>,

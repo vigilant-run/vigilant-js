@@ -1,2 +1,2 @@
-export { addLogging } from './logs'
-export { addExceptionCapture } from './exceptions'
+export { addLoggingMiddleware as addLogging } from './logs'
+export { addExceptionMiddleware as addExceptionCapture } from './exceptions'

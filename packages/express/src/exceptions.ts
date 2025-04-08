@@ -12,13 +12,14 @@ import {
  *
  * This middleware is used to catch unhandled exceptions and log them.
  *
- * Available middleware options (all are default enabled):
+ * Available middleware features (all are default enabled):
  *
  * - exceptions: Captures unhandled exceptions and logs them
+ * - alerts: Creates an alert for unhandled exceptions
  */
 
 /**
- * Configuration for the Vigilant middleware
+ * Configuration for the Vigilant exception middleware
  *
  * Use this to configure the middleware
  *
@@ -64,27 +65,27 @@ export type ExceptionMiddlewareConfig = {
 /**
  * Adds Vigilant middleware to the Express app
  *
- * See the MiddlewareConfig for more information on all the options.
+ * See the ExceptionMiddlewareConfig for more information on all the options.
  *
  * Only use this once in your app after all of your routes are defined.
  *
  * @example
- * addExceptionCapture(app, { withExceptions: false })
+ * addExceptionMiddleware(app, { withExceptions: false })
  *
  */
-export function addExceptionCapture(
+export function addExceptionMiddleware(
   app: Express,
   userConfig?: ExceptionMiddlewareConfig,
 ): void {
   const config = createConfig(userConfig)
 
   if (config.withExceptions) {
-    app.use(createExceptionCapture(config))
+    app.use(createExceptionMiddleware(config))
   }
 }
 
 // Creates a middleware function that captures unhandled exceptions
-function createExceptionCapture(
+function createExceptionMiddleware(
   config: ExceptionMiddlewareConfig,
 ): ErrorRequestHandler {
   return (err: any, req: Request, res: Response, next: NextFunction): void => {

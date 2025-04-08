@@ -2,7 +2,7 @@ import { Batcher, createBatcher } from './batcher'
 import { Config, gateConfig } from './config'
 import { Log, LogLevel, passthroughLog } from './logs/logs'
 import { Alert, passthroughAlert } from './alerts/alerts'
-import { ConfigTokenRequiredError, NotInitializedError } from './messages'
+import { NotInitializedError } from './messages'
 import { LogProvider, LogProviderFactory } from './logs/provider'
 import {
   AttributeProvider,

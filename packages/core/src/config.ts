@@ -1,6 +1,18 @@
 import { ConfigNameRequiredError, ConfigTokenRequiredError } from './messages'
 
-// Config is used to configure the Vigilant global instance when it is created.
+/**
+ * Config is used to configure the Vigilant global instance when it is created.
+ *
+ * `name` and `token` are required, the other fields are optional.
+ *
+ * @example
+ * const config = {
+ *   name: 'my-app',
+ *   token: 'my-token',
+ * }
+ *
+ * init(config)
+ */
 export type Config = {
   name: string
   token: string

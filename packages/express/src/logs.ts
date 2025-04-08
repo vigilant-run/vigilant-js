@@ -14,7 +14,7 @@ import {
  * This middleware is used to log incoming requests and outgoing responses,
  * and to add tracing attributes to incoming requests.
  *
- * Available middleware options (all are default enabled):
+ * Available middleware features (all are default enabled):
  *
  * - tracing: Adds a trace ID to incoming requests
  * - logging: Logs incoming requests and outgoing responses
@@ -69,7 +69,7 @@ export type LoggingMiddlewareConfig = {
  * addLogging(app)
  *
  */
-export function addLogging(
+export function addLoggingMiddleware(
   app: Express,
   userConfig?: LoggingMiddlewareConfig,
 ): void {
