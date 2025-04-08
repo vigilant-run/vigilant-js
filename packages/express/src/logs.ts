@@ -123,7 +123,10 @@ function createRequestLogger(): RequestHandler {
 // Creates a middleware function that logs outgoing responses
 function createResponseLogger(): RequestHandler {
   return (req: Request, res: Response, next: NextFunction): void => {
+    const startTime = process.hrtime()
     res.on('finish', () => {
+      const endTime = process.hrtime(startTime)
+      const duration = endTime[0] * 1000 + endTime[1] / 1e6
       logInfo(
         `Outgoing response for ${req.url}, method: ${req.method}, status: ${res.statusCode}`,
         {
@@ -131,6 +134,7 @@ function createResponseLogger(): RequestHandler {
           'request.method': req.method,
           'request.body': JSON.stringify(req.body, null, 2),
           'response.status': res.statusCode.toString(),
+          'response.duration': `${duration}ms`,
         },
       )
     })

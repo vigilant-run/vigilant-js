@@ -91,9 +91,15 @@ function createExceptionCapture(
     logError(
       `Caught an unhandled exception for ${req.url}, method: ${req.method}, error: ${err}`,
       {
-        url: req.url,
-        method: req.method,
-        error: err instanceof Error ? err.message : 'Unknown error message',
+        'request.url': req.url,
+        'request.method': req.method,
+        'request.body': JSON.stringify(req.body, null, 2),
+        'request.headers': JSON.stringify(req.headers, null, 2),
+        ...(err instanceof Error && {
+          'error.name': err.name,
+          'error.message': err.message,
+          'error.stack': err.stack,
+        }),
       },
     )
 
@@ -103,12 +109,11 @@ function createExceptionCapture(
         'request.method': req.method,
         'request.body': JSON.stringify(req.body, null, 2),
         'request.headers': JSON.stringify(req.headers, null, 2),
-        'error.message':
-          err instanceof Error ? err.message : 'Unknown error message',
-        'error.stack':
-          err instanceof Error
-            ? (err.stack ?? 'Unknown stack trace')
-            : 'Unknown stack trace',
+        ...(err instanceof Error && {
+          'error.name': err.name,
+          'error.message': err.message,
+          'error.stack': err.stack,
+        }),
       })
     }
 
