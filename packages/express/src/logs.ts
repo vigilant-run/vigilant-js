@@ -7,6 +7,7 @@ import {
   Response,
   RequestHandler,
 } from 'express'
+import { parseRoute } from './utils'
 
 /**
  * Express middleware for logging and tracing requests
@@ -112,7 +113,8 @@ function createTracingMiddleware(
 function createRequestLogger(): RequestHandler {
   return (req: Request, _: Response, next: NextFunction): void => {
     const attributes: Record<string, string> = {
-      'request.url': req.originalUrl,
+      'request.url': req.url,
+      'request.route': parseRoute(req),
       'request.method': req.method,
     }
 
@@ -121,7 +123,7 @@ function createRequestLogger(): RequestHandler {
     } catch (error) {}
 
     logInfo(
-      `Incoming request for ${req.originalUrl}, method: ${req.method}`,
+      `Incoming request for ${req.url}, method: ${req.method}`,
       attributes,
     )
     next()
@@ -136,7 +138,8 @@ function createResponseLogger(): RequestHandler {
       const endTime = process.hrtime(startTime)
       const duration = endTime[0] * 1000 + endTime[1] / 1e6
       const attributes: Record<string, string> = {
-        'request.url': req.originalUrl,
+        'request.url': req.url,
+        'request.route': parseRoute(req),
         'request.method': req.method,
         'response.status': res.statusCode.toString(),
         'response.duration': `${duration}ms`,
@@ -147,7 +150,7 @@ function createResponseLogger(): RequestHandler {
       } catch (error) {}
 
       logInfo(
-        `Outgoing response for ${req.originalUrl}, method: ${req.method}, status: ${res.statusCode}`,
+        `Outgoing response for ${req.url}, method: ${req.method}, status: ${res.statusCode}`,
         attributes,
       )
     })

@@ -6,6 +6,7 @@ import {
   ErrorRequestHandler,
   Express,
 } from 'express'
+import { parseRoute } from './utils'
 
 /**
  * Express middleware for catching unhandled exceptions
@@ -90,7 +91,8 @@ function createExceptionMiddleware(
 ): ErrorRequestHandler {
   return (err: any, req: Request, res: Response, next: NextFunction): void => {
     const attributes: Record<string, string> = {
-      'request.url': req.originalUrl,
+      'request.url': req.url,
+      'request.route': parseRoute(req),
       'request.method': req.method,
       'request.headers': JSON.stringify(req.headers ?? {}, null, 2),
       ...(err instanceof Error && {
@@ -105,7 +107,7 @@ function createExceptionMiddleware(
     } catch (error) {}
 
     logError(
-      `Caught an unhandled exception for ${req.originalUrl}, method: ${req.method}, error: ${err}`,
+      `Caught an unhandled exception for ${req.url}, method: ${req.method}, error: ${err}`,
       attributes,
     )
 
@@ -147,8 +149,4 @@ function createConfig(
     createAlert: true,
     ...userConfig,
   }
-}
-
-function parseRoute(req: Request): string {
-  return req.route?.path ?? 'Unknown route'
 }
