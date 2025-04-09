@@ -18,9 +18,9 @@ Vigilant automatically captures console statements and sends them to the Vigilan
 You can also log messages with the logging functions directly.
 
 ```ts
-import { init, logInfo } from '@vigilant-js/core'
+import { initVigilant, logInfo } from '@vigilant-js/core'
 
-init({
+initVigilant({
   name: 'backend',
   token: 'generated-token-here',
 })
@@ -35,9 +35,9 @@ Vigilant allows you to create alerts for specific events.
 You will get notified when an alert is created.
 
 ```ts
-import { init, createAlert } from '@vigilant-js/core'
+import { initVigilant, createAlert } from '@vigilant-js/core'
 
-init({
+initVigilant({
   name: 'backend',
   token: 'generated-token-here',
 })

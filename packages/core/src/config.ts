@@ -11,7 +11,7 @@ import { ConfigNameRequiredError, ConfigTokenRequiredError } from './messages'
  *   token: 'my-token',
  * }
  *
- * init(config)
+ * initVigilant(config)
  */
 export type Config = {
   name: string

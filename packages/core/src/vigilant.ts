@@ -31,17 +31,32 @@ type VigilantConfig = {
 
 export var globalInstance: Vigilant | null = null
 
-// Initialize the global instance with the provided configuration.
-// Automatically shuts down the global instance when the process is terminated.
-export function init(config: Config) {
+/**
+ * Initialize the global instance with the provided configuration.
+ * Automatically shuts down the global instance when the process is terminated.
+ *
+ * @example
+ * const config = {
+ *   name: 'my-app',
+ *   token: 'my-token',
+ * }
+ *
+ * initVigilant(config)
+ */
+export function initVigilant(config: Config) {
   gateConfig(config)
   globalInstance = new Vigilant({ ...defaultConfig, ...config })
   globalInstance.start()
   addShutdownListeners()
 }
 
-// Manually shutdown the global instance.
-export async function shutdown() {
+/**
+ * Manually shutdown the global instance.
+ *
+ * @example
+ * await shutdownVigilant()
+ */
+export async function shutdownVigilant() {
   await handleShutdown()
 }
 

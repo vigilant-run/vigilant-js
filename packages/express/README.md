@@ -21,10 +21,10 @@ Vigilant Express provides two middleware functions:
 Use these to monitor your Express application.
 
 ```ts
-import { init } from '@vigilant-js/core'
+import { initVigilant } from '@vigilant-js/core'
 import { addExceptionMiddleware, addLoggingMiddleware } from '@vigilant-js/express'
 
-init({
+initVigilant({
   name: 'backend',
   token: 'generated-token-here',
 })

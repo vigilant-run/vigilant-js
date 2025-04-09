@@ -3,52 +3,52 @@ import chalk from 'chalk'
 export const ConfigTokenRequiredError = buildError(
   `You cannot have an empty token when initializing Vigilant.
 Generate one by visiting: https://dashboard.vigilant.run/settings/project/api`,
-  `import { init } from '@vigilant/core'
+  `import { initVigilant } from '@vigilant/core'
 
 const config = {
   name: 'My Application',
   token: 'your-token-here',
 }
 
-init(config)`,
+initVigilant(config)`,
 )
 
 export const ConfigNameRequiredError = buildError(
   `You cannot use an empty name when initializing Vigilant.
 Use the name of your application or service, e.g. 'backend', 'api', etc.`,
-  `import { init } from '@vigilant/core'
+  `import { initVigilant } from '@vigilant/core'
 
 const config = {
   name: 'My Application',
   token: 'your-token-here',
 }
 
-init(config)`,
+initVigilant(config)`,
 )
 
 export const NotInitializedError = buildError(
   `Vigilant has not been initialized.
-Use the 'init()' function to initialize Vigilant.`,
+Use the 'initVigilant()' function to initialize Vigilant.`,
   `const config = {
   name: 'backend',
   token: 'your-token-here',
 }
 
-init(config)`,
+initVigilant(config)`,
 )
 
 export const BatcherInvalidTokenError = buildError(
   `The token you have provided is invalid.
 Please generate a new token by visiting: https://dashboard.vigilant.run/settings/project/api
 If the issue persists, please contact support@vigilant.run`,
-  `import { init } from '@vigilant/core'
+  `import { initVigilant } from '@vigilant/core'
 
 const config = {
   name: 'backend',
   token: 'your-token-here',
 }
 
-init(config)`,
+initVigilant(config)`,
 )
 
 export const BatchInternalServerError = buildError(
