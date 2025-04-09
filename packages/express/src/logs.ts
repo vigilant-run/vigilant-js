@@ -1,5 +1,5 @@
 import { v4 } from 'uuid'
-import { addAttributes, logInfo } from '@vigilant-js/core'
+import { addAttributes, logInfo, logWarn } from '@vigilant-js/core'
 import {
   Express,
   NextFunction,
@@ -111,11 +111,19 @@ function createTracingMiddleware(
 // Creates a middleware function that logs incoming requests
 function createRequestLogger(): RequestHandler {
   return (req: Request, _: Response, next: NextFunction): void => {
-    logInfo(`Incoming request for ${req.url}, method: ${req.method}`, {
-      'request.url': req.url,
+    const attributes: Record<string, string> = {
+      'request.url': req.originalUrl,
       'request.method': req.method,
-      'request.body': JSON.stringify(req.body, null, 2),
-    })
+    }
+
+    try {
+      attributes['request.body'] = JSON.stringify(req.body ?? {}, null, 2)
+    } catch (error) {}
+
+    logInfo(
+      `Incoming request for ${req.originalUrl}, method: ${req.method}`,
+      attributes,
+    )
     next()
   }
 }
@@ -127,15 +135,20 @@ function createResponseLogger(): RequestHandler {
     res.on('finish', () => {
       const endTime = process.hrtime(startTime)
       const duration = endTime[0] * 1000 + endTime[1] / 1e6
+      const attributes: Record<string, string> = {
+        'request.url': req.originalUrl,
+        'request.method': req.method,
+        'response.status': res.statusCode.toString(),
+        'response.duration': `${duration}ms`,
+      }
+
+      try {
+        attributes['request.body'] = JSON.stringify(req.body ?? {}, null, 2)
+      } catch (error) {}
+
       logInfo(
-        `Outgoing response for ${req.url}, method: ${req.method}, status: ${res.statusCode}`,
-        {
-          'request.url': req.url,
-          'request.method': req.method,
-          'request.body': JSON.stringify(req.body, null, 2),
-          'response.status': res.statusCode.toString(),
-          'response.duration': `${duration}ms`,
-        },
+        `Outgoing response for ${req.originalUrl}, method: ${req.method}, status: ${res.statusCode}`,
+        attributes,
       )
     })
     next()

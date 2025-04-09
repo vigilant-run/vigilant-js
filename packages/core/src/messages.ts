@@ -84,7 +84,7 @@ export const InvalidAttributesWarning = (
   attributes: Record<string, string>,
 ) => {
   return buildWarning(
-    `The following attributes are invalid: ${JSON.stringify(attributes)}.
+    `The following attributes are invalid: ${Object.values(attributes).join(', ')}.
 Only string keys and values are supported.`,
   )
 }

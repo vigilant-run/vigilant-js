@@ -138,16 +138,16 @@ function createLogInstance(
   }
 }
 
-// Returns null if the message is invalid
+// Returns null if the message is invalid.
 function gateInvalidMessage(message: string): string | null {
   if (typeof message !== 'string') {
-    console.warn(InvalidLogMessageWarning(message))
+    logWarn(InvalidLogMessageWarning(message))
     return null
   }
   return message
 }
 
-// Filters out invalid attributes
+// Filters out invalid attributes from the attributes map.
 function filterInvalidAttributes(
   attributes: Record<string, string>,
 ): Record<string, string> {
@@ -161,7 +161,7 @@ function filterInvalidAttributes(
     }
   }
   if (Object.keys(invalidAttributes).length > 0) {
-    console.warn(InvalidAttributesWarning(invalidAttributes))
+    logWarn(InvalidAttributesWarning(invalidAttributes))
   }
   return validAttributes
 }

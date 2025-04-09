@@ -89,33 +89,31 @@ function createExceptionMiddleware(
   config: ExceptionMiddlewareConfig,
 ): ErrorRequestHandler {
   return (err: any, req: Request, res: Response, next: NextFunction): void => {
+    const attributes: Record<string, string> = {
+      'request.url': req.originalUrl,
+      'request.method': req.method,
+      'request.headers': JSON.stringify(req.headers ?? {}, null, 2),
+      ...(err instanceof Error && {
+        'error.name': err.name,
+        'error.message': err.message,
+        'error.stack': err.stack ?? 'No stack trace',
+      }),
+    }
+
+    try {
+      attributes['request.body'] = JSON.stringify(req.body ?? {}, null, 2)
+    } catch (error) {}
+
     logError(
-      `Caught an unhandled exception for ${req.url}, method: ${req.method}, error: ${err}`,
-      {
-        'request.url': req.url,
-        'request.method': req.method,
-        'request.body': JSON.stringify(req.body, null, 2),
-        'request.headers': JSON.stringify(req.headers, null, 2),
-        ...(err instanceof Error && {
-          'error.name': err.name,
-          'error.message': err.message,
-          'error.stack': err.stack,
-        }),
-      },
+      `Caught an unhandled exception for ${req.originalUrl}, method: ${req.method}, error: ${err}`,
+      attributes,
     )
 
     if (config.createAlert) {
-      createAlert(`Unhandled exception for route ${parseUrl(req)}`, {
-        'request.url': req.url,
-        'request.method': req.method,
-        'request.body': JSON.stringify(req.body, null, 2),
-        'request.headers': JSON.stringify(req.headers, null, 2),
-        ...(err instanceof Error && {
-          'error.name': err.name,
-          'error.message': err.message,
-          'error.stack': err.stack,
-        }),
-      })
+      createAlert(
+        `Unhandled exception for route ${parseRoute(req)}`,
+        attributes,
+      )
     }
 
     if (!res.headersSent) {
@@ -126,9 +124,7 @@ function createExceptionMiddleware(
       }
 
       if (config.addMessage) {
-        res.send({
-          error: err.message ?? 'Unknown error',
-        })
+        res.send({ error: err.message ?? 'Unknown error' })
       } else {
         res.send()
       }
@@ -153,9 +149,6 @@ function createConfig(
   }
 }
 
-function parseUrl(req: Request): string {
-  const route = req.route
-  const baseUrl = req.baseUrl || ''
-  const path = route ? route.path : ''
-  return baseUrl + path
+function parseRoute(req: Request): string {
+  return req.route?.path ?? 'Unknown route'
 }
