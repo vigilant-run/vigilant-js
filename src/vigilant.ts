@@ -1,5 +1,5 @@
 import { Batcher, createBatcher } from './batcher'
-import { Config, gateConfig } from './config'
+import { gateConfig, mergeConfig, UserConfig } from './config'
 import { Log, passthroughLog } from './logs/logs'
 import { NotInitializedError } from './messages'
 import { LogProvider, LogProviderFactory } from './logs/provider'
@@ -12,9 +12,10 @@ export var globalInstance: Vigilant | null = null
 
 // Initialize the global instance with the provided configuration.
 // Automatically shuts down the global instance when the process is terminated.
-export function init(config: Config) {
-  gateConfig(config)
-  globalInstance = new Vigilant(config)
+export function init(config: UserConfig) {
+  const mergedConfig = mergeConfig(config)
+  gateConfig(mergedConfig)
+  globalInstance = new Vigilant(mergedConfig)
   globalInstance.start()
   addShutdownListeners()
 }
@@ -40,7 +41,7 @@ export class Vigilant {
 
   private logsBatcher: Batcher<Log>
 
-  constructor(config: Config) {
+  constructor(config: UserConfig) {
     this.name = config.name
     this.endpoint = createFormattedEndpoint(config.endpoint, config.insecure)
     this.token = config.token
