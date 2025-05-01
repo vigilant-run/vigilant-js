@@ -1,8 +1,8 @@
 {
-  "name": "@vigilant/core",
+  "name": "vigilant-js",
   "author": "Vigilant",
-  "version": "1.0.0",
-  "description": "Base package for Vigilant",
+  "version": "3.0.0",
+  "description": "Vigilant SDK for JavaScript",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",
