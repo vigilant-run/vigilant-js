@@ -88,14 +88,6 @@ The message must be a string.`,
 logInfo('Hello, world!')`,
 )
 
-export const InvalidAlertTitleError = buildError(
-  `The alert title is invalid.
-The title must be a string.`,
-  `import { createAlert } from 'vigilant-js'
-
-createAlert('Hello, world!')`,
-)
-
 export function buildError(message: string, exampleUsage?: string): Error {
   let errorMessage = `${chalk.hex('#FF8480').bold('[ **** Vigilant Error **** ]')}\n\n`
   errorMessage += `${message}\n\n`

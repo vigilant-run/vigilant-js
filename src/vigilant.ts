@@ -1,7 +1,6 @@
 import { Batcher, createBatcher } from './batcher'
 import { Config, gateConfig } from './config'
-import { Log, LogLevel, passthroughLog } from './logs/logs'
-import { Alert, passthroughAlert } from './alerts/alerts'
+import { Log, passthroughLog } from './logs/logs'
 import { NotInitializedError } from './messages'
 import { LogProvider, LogProviderFactory } from './logs/provider'
 import {
@@ -25,7 +24,7 @@ export async function shutdown() {
   await handleShutdown()
 }
 
-// Vigilant is a class used to send logs, alerts, and metrics to Vigilant.
+// Vigilant is a class used to send logs and metrics to Vigilant.
 // It can be configured to be a noop, which will prevent it from sending any data to Vigilant.
 // It requires a name, endpoint, and token to be configured properly.
 export class Vigilant {
@@ -40,7 +39,6 @@ export class Vigilant {
   private attributeProvider: AttributeProvider | null
 
   private logsBatcher: Batcher<Log>
-  private alertsBatcher: Batcher<Alert>
 
   constructor(config: Config) {
     this.name = config.name
@@ -54,15 +52,13 @@ export class Vigilant {
     this.attributeProvider = null
 
     this.logsBatcher = createLogBatcher(this.endpoint, this.token)
-    this.alertsBatcher = createAlertBatcher(this.endpoint, this.token)
   }
 
   // Start the global instance. This will start the event batchers.
   start = () => {
     this.logsBatcher.start()
-    this.alertsBatcher.start()
 
-    const attributeProvider = AttributeProviderFactory.create()
+    const attributeProvider = AttributeProviderFactory.create(this.name)
     this.attributeProvider = attributeProvider
 
     const enabled = this.autocapture && !this.noop
@@ -75,10 +71,7 @@ export class Vigilant {
   // Shutdown the global instance. This will shutdown the event batchers.
   shutdown = async () => {
     this.logProvider?.disable()
-    await Promise.all([
-      this.alertsBatcher.shutdown(),
-      this.logsBatcher.shutdown(),
-    ])
+    await this.logsBatcher.shutdown()
   }
 
   // Queues a log to be sent.
@@ -95,29 +88,10 @@ export class Vigilant {
 
     this.logsBatcher.add(log)
   }
-
-  // Queues an alert to be sent.
-  sendAlert = (alert: Alert) => {
-    if (this.attributeProvider) {
-      this.attributeProvider.update(alert.attributes)
-    }
-
-    if (this.passthrough && this.logProvider) {
-      passthroughAlert(alert, this.logProvider.getPassthroughFn(LogLevel.error))
-    }
-
-    if (this.noop) return
-
-    this.alertsBatcher.add(alert)
-  }
 }
 
 function createLogBatcher(endpoint: string, token: string): Batcher<Log> {
   return createBatcher(endpoint, token, 'logs', 'logs')
-}
-
-function createAlertBatcher(endpoint: string, token: string): Batcher<Alert> {
-  return createBatcher(endpoint, token, 'alerts', 'alerts')
 }
 
 function createFormattedEndpoint(endpoint: string, insecure: boolean): string {

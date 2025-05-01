@@ -31,7 +31,7 @@ export class ConfigBuilder {
     }
   }
 
-  // Sets the name added to all logs, alerts, and metrics.
+  // Sets the name added to all logs.
   withName(name: string): ConfigBuilder {
     this.config.name = name
     return this
