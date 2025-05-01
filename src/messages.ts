@@ -88,6 +88,23 @@ The message must be a string.`,
 logInfo('Hello, world!')`,
 )
 
+export const InvalidTagsError = buildError(
+  `The tags are invalid.
+Tags must be a non-null object.
+The keys and values must be strings.`,
+  `import { counter } from 'vigilant-js'
+
+counter('my_metric', 1, { env: 'prod' })`,
+)
+
+export const InvalidMetricNameError = buildError(
+  `The metric name is invalid.
+The name must be a non-empty string.`,
+  `import { counter } from 'vigilant-js'
+
+counter('my_metric', 1)`,
+)
+
 export function buildError(message: string, exampleUsage?: string): Error {
   let errorMessage = `${chalk.hex('#FF8480').bold('[ **** Vigilant Error **** ]')}\n\n`
   errorMessage += `${message}\n\n`

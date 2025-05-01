@@ -1,31 +1,26 @@
 import axios from 'axios'
-import { BatcherInvalidTokenError, BatchInternalServerError } from './messages'
+import { BatcherInvalidTokenError, BatchInternalServerError } from '../messages'
+import { Log } from './logs'
 
-// Batcher is a class used to batch and event batches to Vigilant.
-export class Batcher<T> {
+// LogBatcher is a class used to batch and event batches to Vigilant.
+export class LogBatcher {
   private endpoint: string
   private token: string
-  private type: string
-  private key: string
   private batchInterval: number
   private maxBatchSize: number
 
   private batcherPromise: Promise<void> | null
   private batchStop = false
-  private queue: T[]
+  private queue: Log[]
 
   constructor(
     endpoint: string,
     token: string,
-    type: string,
-    key: string,
     batchInterval: number,
     maxBatchSize: number,
   ) {
     this.endpoint = endpoint
     this.token = token
-    this.type = type
-    this.key = key
     this.batchInterval = batchInterval
     this.maxBatchSize = maxBatchSize
 
@@ -34,7 +29,7 @@ export class Batcher<T> {
   }
 
   // Adds an item to the queue.
-  add = (item: T) => {
+  add = (item: Log) => {
     this.queue.push(item)
     this.flushIfFull()
   }
@@ -80,11 +75,10 @@ export class Batcher<T> {
   }
 
   // Sends a batch of events to Vigilant.
-  private async sendBatch(messages: T[]): Promise<void> {
+  private async sendBatch(messages: Log[]): Promise<void> {
     const payload = {
       token: this.token,
-      type: this.type,
-      [this.key]: messages,
+      logs: messages,
     }
 
     const headers = { 'Content-Type': 'application/json' }
@@ -104,13 +98,8 @@ export class Batcher<T> {
   }
 }
 
-// Creates a new batcher with the given endpoint, token, type, and key.
+// Creates a new log batcher with the given endpoint, token, type, and key.
 // Uses default values for batch interval and max batch size.
-export function createBatcher<T>(
-  endpoint: string,
-  token: string,
-  type: string,
-  key: string,
-): Batcher<T> {
-  return new Batcher(endpoint, token, type, key, 100, 1_000)
+export function createLogBatcher(endpoint: string, token: string): LogBatcher {
+  return new LogBatcher(endpoint, token, 100, 1_000)
 }

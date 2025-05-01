@@ -1,4 +1,4 @@
-import { Batcher, createBatcher } from './batcher'
+import { LogBatcher, createLogBatcher } from './logs/batcher'
 import { gateConfig, mergeConfig, UserConfig } from './config'
 import { Log, passthroughLog } from './logs/logs'
 import { NotInitializedError } from './messages'
@@ -7,6 +7,8 @@ import {
   AttributeProvider,
   AttributeProviderFactory,
 } from './attributes/attributes'
+import { Metric } from './metrics/metrics'
+import { createMetricsCollector, MetricCollector } from './metrics/collector'
 
 export var globalInstance: Vigilant | null = null
 
@@ -39,7 +41,8 @@ export class Vigilant {
   private logProvider: LogProvider | null
   private attributeProvider: AttributeProvider | null
 
-  private logsBatcher: Batcher<Log>
+  private logsBatcher: LogBatcher
+  private metricsCollector: MetricCollector
 
   constructor(config: UserConfig) {
     this.name = config.name
@@ -53,11 +56,13 @@ export class Vigilant {
     this.attributeProvider = null
 
     this.logsBatcher = createLogBatcher(this.endpoint, this.token)
+    this.metricsCollector = createMetricsCollector(this.endpoint, this.token)
   }
 
   // Start the global instance. This will start the event batchers.
   start = () => {
     this.logsBatcher.start()
+    this.metricsCollector.start()
 
     const attributeProvider = AttributeProviderFactory.create(this.name)
     this.attributeProvider = attributeProvider
@@ -73,6 +78,7 @@ export class Vigilant {
   shutdown = async () => {
     this.logProvider?.disable()
     await this.logsBatcher.shutdown()
+    await this.metricsCollector.shutdown()
   }
 
   // Queues a log to be sent.
@@ -89,10 +95,24 @@ export class Vigilant {
 
     this.logsBatcher.add(log)
   }
-}
 
-function createLogBatcher(endpoint: string, token: string): Batcher<Log> {
-  return createBatcher(endpoint, token, 'logs', 'logs')
+  // Queues a counter metric to be sent.
+  sendCounter = (metric: Metric) => {
+    if (this.noop) return
+    this.metricsCollector.addCounter(metric)
+  }
+
+  // Queues a gauge metric to be sent.
+  sendGauge = (metric: Metric) => {
+    if (this.noop) return
+    this.metricsCollector.addGauge(metric)
+  }
+
+  // Queues a histogram metric to be sent.
+  sendHistogram = (metric: Metric) => {
+    if (this.noop) return
+    this.metricsCollector.addHistogram(metric)
+  }
 }
 
 function createFormattedEndpoint(endpoint: string, insecure: boolean): string {
