@@ -14,7 +14,7 @@ export var globalInstance: Vigilant | null = null
 
 // Initialize the global instance with the provided configuration.
 // Automatically shuts down the global instance when the process is terminated.
-export function init(config: UserConfig) {
+export function initVigilant(config: UserConfig) {
   const mergedConfig = mergeConfig(config)
   gateConfig(mergedConfig)
   globalInstance = new Vigilant(mergedConfig)
@@ -23,7 +23,7 @@ export function init(config: UserConfig) {
 }
 
 // Manually shutdown the global instance.
-export async function shutdown() {
+export async function shutdownVigilant() {
   await handleShutdown()
 }
 
