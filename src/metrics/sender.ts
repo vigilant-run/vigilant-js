@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { BatcherInvalidTokenError, BatchInternalServerError } from '../messages'
-import { AggregatedMetrics, Metric } from './metrics'
+import { AggregatedMetrics } from './metrics'
 
 // MetricsSender is a class used to send metrics to Vigilant.
 export class MetricsSender {

@@ -1,15 +1,26 @@
-import { AggregatedMetrics, Metric } from './metrics'
+import {
+  AggregatedMetrics,
+  CounterEvent,
+  CounterSeries,
+  GaugeEvent,
+  GaugeSeries,
+  HistogramEvent,
+  HistogramSeries,
+} from './metrics'
 import { createMetricsSender, MetricsSender } from './sender'
 
 // MetricCollector is a class that collects metrics and flushes them to the metrics sender.
 export class MetricCollector {
   private interval: number
   private processInterval: number
-  private capturedMetrics: Record<string, CapturedMetrics>
 
-  private counterQueue: Metric[]
-  private gaugeQueue: Metric[]
-  private histogramQueue: Metric[]
+  private counterQueue: CounterEvent[]
+  private gaugeQueue: GaugeEvent[]
+  private histogramQueue: HistogramEvent[]
+
+  private counterSeries: Record<string, CounterSeries>
+  private gaugeSeries: Record<string, GaugeSeries>
+  private histogramSeries: Record<string, HistogramSeries>
 
   private processorInterval: ReturnType<typeof setInterval> | null
   private tickerTimeoutId: ReturnType<typeof setTimeout> | null
@@ -25,11 +36,14 @@ export class MetricCollector {
   ) {
     this.interval = interval
     this.processInterval = processInterval
-    this.capturedMetrics = {}
 
     this.counterQueue = []
     this.gaugeQueue = []
     this.histogramQueue = []
+
+    this.counterSeries = {}
+    this.gaugeSeries = {}
+    this.histogramSeries = {}
 
     this.processorInterval = null
     this.tickerTimeoutId = null
@@ -40,17 +54,17 @@ export class MetricCollector {
   }
 
   // Adds a counter metric to the collector.
-  addCounter = (metric: Metric) => {
+  addCounter = (metric: CounterEvent) => {
     this.counterQueue.push(metric)
   }
 
   // Adds a gauge metric to the collector.
-  addGauge = (metric: Metric) => {
+  addGauge = (metric: GaugeEvent) => {
     this.gaugeQueue.push(metric)
   }
 
   // Adds a histogram metric to the collector.
-  addHistogram = (metric: Metric) => {
+  addHistogram = (metric: HistogramEvent) => {
     this.histogramQueue.push(metric)
   }
 
@@ -76,7 +90,6 @@ export class MetricCollector {
     const now = new Date()
     const start = new Date(now.getTime() - (now.getTime() % this.interval))
     const next = new Date(start.getTime() + this.interval)
-
     const firstTriggerTime = next.getTime() + 1000
 
     let durationUntilFirstTrigger = firstTriggerTime - now.getTime()
@@ -151,12 +164,11 @@ export class MetricCollector {
   }
 
   // Processes a counter metric.
-  private processCounter = (metric: Metric): void => {
-    const bucket = this.getBucket(metric.timestamp)
+  private processCounter = (metric: CounterEvent): void => {
     const identifier = this.getIdentifer(metric)
-    const counter = bucket.counter[identifier]
+    const counter = this.counterSeries[identifier]
     if (!counter) {
-      bucket.counter[identifier] = {
+      this.counterSeries[identifier] = {
         name: metric.name,
         value: metric.value,
         tags: metric.tags,
@@ -167,12 +179,11 @@ export class MetricCollector {
   }
 
   // Processes a gauge metric.
-  private processGauge = (metric: Metric): void => {
-    const bucket = this.getBucket(metric.timestamp)
+  private processGauge = (metric: GaugeEvent): void => {
     const identifier = this.getIdentifer(metric)
-    const gauge = bucket.gauge[identifier]
+    const gauge = this.gaugeSeries[identifier]
     if (!gauge) {
-      bucket.gauge[identifier] = {
+      this.gaugeSeries[identifier] = {
         name: metric.name,
         value: metric.value,
         tags: metric.tags,
@@ -183,12 +194,11 @@ export class MetricCollector {
   }
 
   // Processes a previously queued histogram metric.
-  private processHistogram = (metric: Metric): void => {
-    const bucket = this.getBucket(metric.timestamp)
+  private processHistogram = (metric: HistogramEvent): void => {
     const identifier = this.getIdentifer(metric)
-    const histogram = bucket.histogram[identifier]
+    const histogram = this.histogramSeries[identifier]
     if (!histogram) {
-      bucket.histogram[identifier] = {
+      this.histogramSeries[identifier] = {
         name: metric.name,
         values: [metric.value],
         tags: metric.tags,
@@ -198,23 +208,10 @@ export class MetricCollector {
     }
   }
 
-  // Gets the interval bucket for a given timestamp.
-  private getBucket = (timestamp: Date): CapturedMetrics => {
-    const flooredTime =
-      Math.floor(timestamp.getTime() / this.interval) * this.interval
-    const bucketIndex = new Date(flooredTime).toISOString()
-    if (!this.capturedMetrics[bucketIndex]) {
-      this.capturedMetrics[bucketIndex] = {
-        counter: {},
-        gauge: {},
-        histogram: {},
-      }
-    }
-    return this.capturedMetrics[bucketIndex]
-  }
-
   // Gets the identifier for a metric.
-  private getIdentifer = (metric: Metric): string => {
+  private getIdentifer = (
+    metric: CounterEvent | GaugeEvent | HistogramEvent,
+  ): string => {
     const tags = Object.entries(metric.tags).sort((a, b) =>
       a[0].localeCompare(b[0]),
     )
@@ -224,50 +221,55 @@ export class MetricCollector {
   // Sends after shutdown.
   private sendAfterShutdown = (): void => {
     this.processQueues()
-    const keys = Object.keys(this.capturedMetrics)
-    for (const key of keys) {
-      this.sendMetricsForInterval(key)
-    }
+    const now = new Date()
+    const intervalISO = new Date(
+      Math.floor(now.getTime() / this.interval) * this.interval,
+    ).toISOString()
+    this.sendMetricsForInterval(intervalISO)
   }
 
   // Sends the captured metrics for the provided interval timestamp string.
   private sendMetricsForInterval = (intervalISO: string): void => {
-    const metrics = this.capturedMetrics[intervalISO]
-    if (!metrics) return
-    delete this.capturedMetrics[intervalISO]
-
-    const aggregatedMetrics = this.aggregateMetrics(intervalISO, metrics)
-    this.sender.add(aggregatedMetrics)
+    const metrics = this.aggregateMetrics(intervalISO)
+    this.resetCapturedMetrics()
+    this.sender.add(metrics)
   }
 
   // Aggregates captured metrics.
-  private aggregateMetrics = (
-    timestampISO: string,
-    capturedMetrics: CapturedMetrics,
-  ): AggregatedMetrics => {
-    const counters = Object.values(capturedMetrics.counter)
-    const gauges = Object.values(capturedMetrics.gauge)
-    const histograms = Object.values(capturedMetrics.histogram)
+  private aggregateMetrics = (intervalISO: string): AggregatedMetrics => {
+    const counters = Object.values(this.counterSeries)
+    const gauges = Object.values(this.gaugeSeries)
+    const histograms = Object.values(this.histogramSeries)
 
     return {
       counter: counters.map((counter) => ({
-        timestamp: timestampISO,
+        timestamp: intervalISO,
         metric_name: counter.name,
         value: counter.value,
         tags: counter.tags,
       })),
       gauge: gauges.map((gauge) => ({
-        timestamp: timestampISO,
+        timestamp: intervalISO,
         metric_name: gauge.name,
         value: gauge.value,
         tags: gauge.tags,
       })),
       histogram: histograms.map((histogram) => ({
-        timestamp: timestampISO,
+        timestamp: intervalISO,
         metric_name: histogram.name,
         values: histogram.values,
         tags: histogram.tags,
       })),
+    }
+  }
+
+  // Resets the captured metrics.
+  private resetCapturedMetrics = (): void => {
+    for (const key in this.counterSeries) {
+      this.counterSeries[key].value = 0
+    }
+    for (const key in this.histogramSeries) {
+      this.histogramSeries[key].values = []
     }
   }
 }

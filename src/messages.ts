@@ -5,65 +5,59 @@ export const ConfigNotValidError = buildError(
 The configuration must be a valid Config.
 Use the 'ConfigBuilder' to create a valid configuration.
 Generate a token by visiting: https://dashboard.vigilant.run/settings/project/api`,
-  `import { init, ConfigBuilder } from 'vigilant-js'
+  `import { initVigilant } from 'vigilant-js'
 
-const config = new ConfigBuilder()
-  .withName('My Application')
-  .withToken('your-token-here')
-  .build()
-
-init(config)`,
+initVigilant({
+  name: 'backend',
+  token: 'your-token-here',
+})`,
 )
 
 export const ConfigTokenRequiredError = buildError(
   `You cannot have an empty token when initializing Vigilant.
 Use the 'withToken()' method on the builder to set a token.
 Generate one by visiting: https://dashboard.vigilant.run/settings/project/api`,
-  `import { init, ConfigBuilder } from 'vigilant-js'
+  `import { initVigilant } from 'vigilant-js'
 
-const config = new ConfigBuilder()
-  .withName('My Application')
-  .withToken('your-token-here')
-  .build()
-
-init(config)`,
+initVigilant({
+  name: 'backend',
+  token: 'your-token-here',
+})`,
 )
 
 export const ConfigNameRequiredError = buildError(
   `You cannot use an empty name when initializing Vigilant.
-Use the 'withName()' method on the builder to set a name.
+Use the 'name' property to set a name.
 Use the name of your application or service, e.g. 'backend', 'api', etc.`,
-  `import { init, ConfigBuilder } from 'vigilant-js'
+  `import { initVigilant } from 'vigilant-js'
 
-const config = new ConfigBuilder()
-  .withName('backend')
-  .withToken('your-token-here')
-  .build()
-
-init(config)`,
+initVigilant({
+  name: 'backend',
+  token: 'your-token-here',
+})`,
 )
 
 export const NotInitializedError = buildError(
   `Vigilant has not been initialized.
-Use the 'init()' function to initialize Vigilant.`,
-  `const config = new ConfigBuilder()
-  .withName('backend')
-  .withToken('your-token-here')
-  .build()
+Use the 'initVigilant()' function to initialize Vigilant.`,
+  `import { initVigilant } from 'vigilant-js'
 
-init(config)`,
+initVigilant({
+  name: 'backend',
+  token: 'your-token-here',
+})`,
 )
 
 export const BatcherInvalidTokenError = buildError(
   `The token you have provided is invalid.
 Please generate a new token by visiting: https://dashboard.vigilant.run/settings/project/api
 If the issue persists, please contact support@vigilant.run`,
-  `import { init, ConfigBuilder } from 'vigilant-js'
+  `import { initVigilant } from 'vigilant-js'
 
-const config = new ConfigBuilder()
-  .withName('backend')
-  .withToken('your-token-here')
-  .build()`,
+initVigilant({
+  name: 'backend',
+  token: 'your-token-here',
+})`,
 )
 
 export const BatchInternalServerError = buildError(
@@ -92,17 +86,17 @@ export const InvalidTagsError = buildError(
   `The tags are invalid.
 Tags must be a non-null object.
 The keys and values must be strings.`,
-  `import { counter } from 'vigilant-js'
+  `import { metricCounter } from 'vigilant-js'
 
-counter('my_metric', 1, { env: 'prod' })`,
+metricCounter('my_metric', 1, { env: 'prod' })`,
 )
 
 export const InvalidMetricNameError = buildError(
   `The metric name is invalid.
 The name must be a non-empty string.`,
-  `import { counter } from 'vigilant-js'
+  `import { metricCounter } from 'vigilant-js'
 
-counter('my_metric', 1)`,
+metricCounter('my_metric', 1)`,
 )
 
 export function buildError(message: string, exampleUsage?: string): Error {

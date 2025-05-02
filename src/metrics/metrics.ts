@@ -5,11 +5,10 @@ import {
 } from '../messages'
 import { globalInstance } from '../vigilant'
 
-export type Metric = {
-  timestamp: Date
-  name: string
-  value: number
-  tags: Record<string, string>
+export enum GaugeMode {
+  Inc = 'inc',
+  Dec = 'dec',
+  Set = 'set',
 }
 
 /**
@@ -26,7 +25,7 @@ export function metricCounter(
 ): void {
   if (!globalInstance) throw NotInitializedError
 
-  const metric = createMetric(name, value, tags)
+  const metric = createCounterEvent(name, value, tags)
 
   globalInstance.sendCounter(metric)
 }
@@ -36,16 +35,18 @@ export function metricCounter(
  *
  * @param {string} name - The name of the metric.
  * @param {number} value - The value of the metric.
+ * @param {GaugeMode} mode - The mode of the metric.
  * @param {Record<string, string>} [tags] - The tags of the metric.
  */
 export function metricGauge(
   name: string,
   value: number,
+  mode?: GaugeMode,
   tags?: Record<string, string>,
 ): void {
   if (!globalInstance) throw NotInitializedError
 
-  const metric = createMetric(name, value, tags)
+  const metric = createGaugeEvent(name, value, mode, tags)
 
   globalInstance.sendGauge(metric)
 }
@@ -64,7 +65,7 @@ export function metricHistogram(
 ): void {
   if (!globalInstance) throw NotInitializedError
 
-  const metric = createMetric(name, value, tags)
+  const metric = createHistogramEvent(name, value, tags)
 
   globalInstance.sendHistogram(metric)
 }
@@ -89,19 +90,85 @@ function gateTags(tags?: Record<string, string>): void {
   }
 }
 
-export function createMetric(
+export function createCounterEvent(
   name: string,
   value: number,
   tags?: Record<string, string>,
-): Metric {
+): CounterEvent {
   gateName(name)
   gateTags(tags)
   return {
-    timestamp: new Date(),
     name: name,
     value: value,
     tags: tags || {},
   }
+}
+
+export function createGaugeEvent(
+  name: string,
+  value: number,
+  mode?: GaugeMode,
+  tags?: Record<string, string>,
+): GaugeEvent {
+  gateName(name)
+  gateTags(tags)
+  return {
+    name: name,
+    value: value,
+    mode: mode || GaugeMode.Inc,
+    tags: tags || {},
+  }
+}
+
+export function createHistogramEvent(
+  name: string,
+  value: number,
+  tags?: Record<string, string>,
+): HistogramEvent {
+  gateName(name)
+  gateTags(tags)
+  return {
+    name: name,
+    value: value,
+    tags: tags || {},
+  }
+}
+
+export type CounterEvent = {
+  name: string
+  value: number
+  tags: Record<string, string>
+}
+
+export type GaugeEvent = {
+  name: string
+  value: number
+  mode: GaugeMode
+  tags: Record<string, string>
+}
+
+export type HistogramEvent = {
+  name: string
+  value: number
+  tags: Record<string, string>
+}
+
+export type CounterSeries = {
+  name: string
+  value: number
+  tags: Record<string, string>
+}
+
+export type GaugeSeries = {
+  name: string
+  value: number
+  tags: Record<string, string>
+}
+
+export type HistogramSeries = {
+  name: string
+  values: number[]
+  tags: Record<string, string>
 }
 
 export type CounterMessage = {

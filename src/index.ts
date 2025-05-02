@@ -2,4 +2,9 @@ export { initVigilant, shutdownVigilant } from './vigilant'
 export { UserConfig } from './config'
 export { logInfo, logDebug, logWarn, logError, logTrace } from './logs/logs'
 export { addAttributes } from './attributes/stored'
-export { metricCounter, metricGauge, metricHistogram } from './metrics/metrics'
+export {
+  metricCounter,
+  metricGauge,
+  metricHistogram,
+  GaugeMode,
+} from './metrics/metrics'

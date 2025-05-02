@@ -7,7 +7,7 @@ import {
   AttributeProvider,
   AttributeProviderFactory,
 } from './attributes/attributes'
-import { Metric } from './metrics/metrics'
+import { CounterEvent, GaugeEvent, HistogramEvent } from './metrics/metrics'
 import { createMetricsCollector, MetricCollector } from './metrics/collector'
 
 export var globalInstance: Vigilant | null = null
@@ -97,19 +97,19 @@ export class Vigilant {
   }
 
   // Queues a counter metric to be sent.
-  sendCounter = (metric: Metric) => {
+  sendCounter = (metric: CounterEvent) => {
     if (this.noop) return
     this.metricsCollector.addCounter(metric)
   }
 
   // Queues a gauge metric to be sent.
-  sendGauge = (metric: Metric) => {
+  sendGauge = (metric: GaugeEvent) => {
     if (this.noop) return
     this.metricsCollector.addGauge(metric)
   }
 
   // Queues a histogram metric to be sent.
-  sendHistogram = (metric: Metric) => {
+  sendHistogram = (metric: HistogramEvent) => {
     if (this.noop) return
     this.metricsCollector.addHistogram(metric)
   }
