@@ -1,4 +1,4 @@
-import { NameAttributeAppenderFactory } from './name'
+import { GlobalAttributeAppenderFactory } from './global'
 import { StoredAttributeAppenderFactory } from './stored'
 
 // Adds attributes to each log message
@@ -24,9 +24,9 @@ export class AttributeProvider {
 
 // Creates a new AttributeProvider with attached appenders
 export class AttributeProviderFactory {
-  static create(name: string): AttributeProvider {
+  static create(attributes: Record<string, string>): AttributeProvider {
     return new AttributeProvider([
-      NameAttributeAppenderFactory.create(name),
+      GlobalAttributeAppenderFactory.create(attributes),
       StoredAttributeAppenderFactory.create(),
     ])
   }

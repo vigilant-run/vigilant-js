@@ -13,6 +13,7 @@ export type UserConfig = {
   passthrough: boolean
   autocapture: boolean
   noop: boolean
+  attributes: Record<string, string>
 }
 
 // Config is the internal configuration used by the Vigilant global instance.
@@ -24,6 +25,7 @@ export type Config = {
   passthrough: boolean
   autocapture: boolean
   noop: boolean
+  attributes: Record<string, string>
 }
 
 const defaultConfig: Config = {
@@ -34,6 +36,7 @@ const defaultConfig: Config = {
   passthrough: true,
   autocapture: true,
   noop: false,
+  attributes: {},
 }
 
 export function mergeConfig(userConfig: UserConfig): Config {
@@ -68,6 +71,8 @@ export function isConfig(config: any): config is Config {
     typeof config.insecure === 'boolean' &&
     typeof config.noop === 'boolean' &&
     typeof config.passthrough === 'boolean' &&
-    typeof config.autocapture === 'boolean'
+    typeof config.autocapture === 'boolean' &&
+    typeof config.attributes === 'object' &&
+    config.attributes !== null
   )
 }

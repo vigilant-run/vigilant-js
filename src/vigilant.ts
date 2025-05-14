@@ -57,15 +57,16 @@ export class Vigilant {
 
     this.logsBatcher = createLogBatcher(this.endpoint, this.token)
     this.metricsCollector = createMetricsCollector(this.endpoint, this.token)
+
+    const attributes = { service: this.name, ...config.attributes }
+    const attributeProvider = AttributeProviderFactory.create(attributes)
+    this.attributeProvider = attributeProvider
   }
 
   // Start the global instance. This will start the event batchers.
   start = () => {
     this.logsBatcher.start()
     this.metricsCollector.start()
-
-    const attributeProvider = AttributeProviderFactory.create(this.name)
-    this.attributeProvider = attributeProvider
 
     const enabled = this.autocapture && !this.noop
     const logProvider = LogProviderFactory.create(enabled)
