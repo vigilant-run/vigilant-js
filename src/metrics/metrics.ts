@@ -5,10 +5,38 @@ import {
 } from '../messages'
 import { globalInstance } from '../vigilant'
 
+export type Metric = {
+  timestamp: string
+  name: string
+  value: number
+  attributes: Record<string, string>
+}
+
 export enum GaugeMode {
   Inc = 'inc',
   Dec = 'dec',
   Set = 'set',
+}
+
+/**
+ * Creates a metric event.
+ *
+ * @param {string} name - The name of the metric.
+ * @param {number} value - The value of the metric.
+ * @param {Record<string, string>} [attributes] - The attributes of the metric.
+ * @example
+ * metricEvent('my_metric', 1, { user: '123' })
+ */
+export function metricEvent(
+  name: string,
+  value: number,
+  attributes?: Record<string, string>,
+): void {
+  if (!globalInstance) throw NotInitializedError
+
+  const metric = createMetricEvent(name, value, attributes)
+
+  globalInstance.sendMetric(metric)
 }
 
 /**
@@ -87,6 +115,21 @@ function gateTags(tags?: Record<string, string>): void {
     if (typeof key !== 'string' || typeof value !== 'string') {
       throw InvalidTagsError
     }
+  }
+}
+
+export function createMetricEvent(
+  name: string,
+  value: number,
+  attributes?: Record<string, string>,
+): Metric {
+  gateName(name)
+  gateTags(attributes)
+  return {
+    timestamp: new Date().toISOString(),
+    name: name,
+    value: value,
+    attributes: attributes || {},
   }
 }
 

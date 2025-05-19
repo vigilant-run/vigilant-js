@@ -1,9 +1,9 @@
 import axios from 'axios'
 import { BatcherInvalidTokenError, BatchInternalServerError } from '../messages'
-import { Log } from './logs'
+import { Metric } from './metrics'
 
-// LogBatcher is a class used to batch and send logs to Vigilant.
-export class LogBatcher {
+// MetricBatcher is a class used to batch and send metrics to Vigilant.
+export class MetricBatcher {
   private endpoint: string
   private token: string
   private batchInterval: number
@@ -11,7 +11,7 @@ export class LogBatcher {
 
   private batcherPromise: Promise<void> | null
   private batchStop = false
-  private queue: Log[]
+  private queue: Metric[]
 
   constructor(
     endpoint: string,
@@ -29,7 +29,7 @@ export class LogBatcher {
   }
 
   // Adds an item to the queue.
-  add = (item: Log) => {
+  add = (item: Metric) => {
     this.queue.push(item)
     this.flushIfFull()
   }
@@ -74,11 +74,11 @@ export class LogBatcher {
     }
   }
 
-  // Sends a batch of logs to Vigilant.
-  private async sendBatch(messages: Log[]): Promise<void> {
+  // Sends a batch of metrics to Vigilant.
+  private async sendBatch(messages: Metric[]): Promise<void> {
     const payload = {
       token: this.token,
-      logs: messages,
+      metrics: messages,
     }
 
     const headers = { 'Content-Type': 'application/json' }
@@ -98,8 +98,10 @@ export class LogBatcher {
   }
 }
 
-// Creates a new log batcher with the given endpoint, token, type, and key.
-// Uses default values for batch interval and max batch size.
-export function createLogBatcher(endpoint: string, token: string): LogBatcher {
-  return new LogBatcher(endpoint, token, 100, 1_000)
+// Creates a new metric batcher with the given endpoint, token, batch interval, and max batch size.
+export function createMetricBatcher(
+  endpoint: string,
+  token: string,
+): MetricBatcher {
+  return new MetricBatcher(endpoint, token, 100, 1_000)
 }

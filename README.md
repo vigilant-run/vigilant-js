@@ -52,23 +52,11 @@ logTrace('Log a trace message', { user: '123' })
 You can learn more about metrics in Vigilant in the [docs](https://docs.vigilant.run/metrics).
 
 ```ts
-import { metricCounter, metricGauge, metricHistogram, GaugeMode } from 'vigilant-js'
+import { metricEvent } from 'vigilant-js'
 
-// Create a counter metric
-metricCounter('user_login_count', 1)
+// Create a metric event
+metricEvent('user_login_count', 1)
 
-// Create a counter metric with a custom attribute
-metricCounter('user_login_count', 1, { "env": "prod" })
-
-// Create a gauge metric
-metricGauge('active_users', 1, GaugeMode.Set)
-
-// Create a gauge metric with a custom attribute
-metricGauge('active_users', 1, GaugeMode.Set, { "env": "prod" })
-
-// Create a histogram metric
-metricHistogram('http_request_duration', 123.4)
-
-// Create a histogram metric with a custom attribute
-metricHistogram('http_request_duration', 123.4, { "env": "prod" })
+// Create a metric event with a custom attribute
+metricEvent('user_login_count', 1, { "env": "prod" })
 ```

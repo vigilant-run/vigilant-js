@@ -7,8 +7,14 @@ import {
   AttributeProvider,
   AttributeProviderFactory,
 } from './attributes/attributes'
-import { CounterEvent, GaugeEvent, HistogramEvent } from './metrics/metrics'
+import {
+  CounterEvent,
+  GaugeEvent,
+  HistogramEvent,
+  Metric,
+} from './metrics/metrics'
 import { createMetricsCollector, MetricCollector } from './metrics/collector'
+import { createMetricBatcher, MetricBatcher } from './metrics/batcher'
 
 export var globalInstance: Vigilant | null = null
 
@@ -42,6 +48,7 @@ export class Vigilant {
   private attributeProvider: AttributeProvider | null
 
   private logsBatcher: LogBatcher
+  private metricsBatcher: MetricBatcher
   private metricsCollector: MetricCollector
 
   constructor(config: UserConfig) {
@@ -56,6 +63,7 @@ export class Vigilant {
     this.attributeProvider = null
 
     this.logsBatcher = createLogBatcher(this.endpoint, this.token)
+    this.metricsBatcher = createMetricBatcher(this.endpoint, this.token)
     this.metricsCollector = createMetricsCollector(this.endpoint, this.token)
 
     const attributes = { service: this.name, ...config.attributes }
@@ -66,6 +74,7 @@ export class Vigilant {
   // Start the global instance. This will start the event batchers.
   start = () => {
     this.logsBatcher.start()
+    this.metricsBatcher.start()
     this.metricsCollector.start()
 
     const enabled = this.autocapture && !this.noop
@@ -79,6 +88,7 @@ export class Vigilant {
   shutdown = async () => {
     this.logProvider?.disable()
     await this.logsBatcher.shutdown()
+    await this.metricsBatcher.shutdown()
     await this.metricsCollector.shutdown()
   }
 
@@ -95,6 +105,13 @@ export class Vigilant {
     if (this.noop) return
 
     this.logsBatcher.add(log)
+  }
+
+  // Queues a metric to be sent.
+  sendMetric = (metric: Metric) => {
+    if (this.noop) return
+
+    this.metricsBatcher.add(metric)
   }
 
   // Queues a counter metric to be sent.

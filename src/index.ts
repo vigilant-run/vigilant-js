@@ -3,6 +3,7 @@ export { UserConfig } from './config'
 export { logInfo, logDebug, logWarn, logError, logTrace } from './logs/logs'
 export { addAttributes } from './attributes/stored'
 export {
+  metricEvent,
   metricCounter,
   metricGauge,
   metricHistogram,
