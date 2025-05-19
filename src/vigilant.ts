@@ -7,13 +7,7 @@ import {
   AttributeProvider,
   AttributeProviderFactory,
 } from './attributes/attributes'
-import {
-  CounterEvent,
-  GaugeEvent,
-  HistogramEvent,
-  Metric,
-} from './metrics/metrics'
-import { createMetricsCollector, MetricCollector } from './metrics/collector'
+import { Metric } from './metrics/metrics'
 import { createMetricBatcher, MetricBatcher } from './metrics/batcher'
 
 export var globalInstance: Vigilant | null = null
@@ -49,7 +43,6 @@ export class Vigilant {
 
   private logsBatcher: LogBatcher
   private metricsBatcher: MetricBatcher
-  private metricsCollector: MetricCollector
 
   constructor(config: UserConfig) {
     this.name = config.name
@@ -64,7 +57,6 @@ export class Vigilant {
 
     this.logsBatcher = createLogBatcher(this.endpoint, this.token)
     this.metricsBatcher = createMetricBatcher(this.endpoint, this.token)
-    this.metricsCollector = createMetricsCollector(this.endpoint, this.token)
 
     const attributes = { service: this.name, ...config.attributes }
     const attributeProvider = AttributeProviderFactory.create(attributes)
@@ -75,7 +67,6 @@ export class Vigilant {
   start = () => {
     this.logsBatcher.start()
     this.metricsBatcher.start()
-    this.metricsCollector.start()
 
     const enabled = this.autocapture && !this.noop
     const logProvider = LogProviderFactory.create(enabled)
@@ -89,7 +80,6 @@ export class Vigilant {
     this.logProvider?.disable()
     await this.logsBatcher.shutdown()
     await this.metricsBatcher.shutdown()
-    await this.metricsCollector.shutdown()
   }
 
   // Queues a log to be sent.
@@ -112,24 +102,6 @@ export class Vigilant {
     if (this.noop) return
 
     this.metricsBatcher.add(metric)
-  }
-
-  // Queues a counter metric to be sent.
-  sendCounter = (metric: CounterEvent) => {
-    if (this.noop) return
-    this.metricsCollector.addCounter(metric)
-  }
-
-  // Queues a gauge metric to be sent.
-  sendGauge = (metric: GaugeEvent) => {
-    if (this.noop) return
-    this.metricsCollector.addGauge(metric)
-  }
-
-  // Queues a histogram metric to be sent.
-  sendHistogram = (metric: HistogramEvent) => {
-    if (this.noop) return
-    this.metricsCollector.addHistogram(metric)
   }
 }
 

@@ -82,21 +82,21 @@ The message must be a string.`,
 logInfo('Hello, world!')`,
 )
 
-export const InvalidTagsError = buildError(
-  `The tags are invalid.
-Tags must be a non-null object.
+export const InvalidMetricAttributesError = buildError(
+  `The attributes are invalid.
+Attributes must be a non-null object.
 The keys and values must be strings.`,
-  `import { metricCounter } from 'vigilant-js'
+  `import { metricEvent } from 'vigilant-js'
 
-metricCounter('my_metric', 1, { env: 'prod' })`,
+metricEvent('my_metric', 1, { env: 'prod' })`,
 )
 
 export const InvalidMetricNameError = buildError(
   `The metric name is invalid.
 The name must be a non-empty string.`,
-  `import { metricCounter } from 'vigilant-js'
+  `import { metricEvent } from 'vigilant-js'
 
-metricCounter('my_metric', 1)`,
+metricEvent('my_metric', 1)`,
 )
 
 export function buildError(message: string, exampleUsage?: string): Error {
